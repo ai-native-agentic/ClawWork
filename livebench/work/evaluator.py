@@ -24,7 +24,7 @@ class WorkEvaluator:
         max_payment: float = 50.0,
         data_path: str = "./data/agent_data",
         use_llm_evaluation: bool = True,
-        meta_prompts_dir: str = "./eval/meta_prompts"
+        meta_prompts_dir: str = "./eval/meta_prompts",
     ):
         """
         Initialize Work Evaluator
@@ -38,27 +38,23 @@ class WorkEvaluator:
         self.max_payment = max_payment
         self.data_path = data_path
         self.use_llm_evaluation = use_llm_evaluation
-        
+
         # Initialize LLM evaluator - required, will raise error if fails
         if not use_llm_evaluation:
             raise ValueError(
                 "use_llm_evaluation must be True. "
                 "Heuristic evaluation is no longer supported."
             )
-        
+
         from .llm_evaluator import LLMEvaluator
+
         self.llm_evaluator = LLMEvaluator(
-            meta_prompts_dir=meta_prompts_dir,
-            max_payment=max_payment
+            meta_prompts_dir=meta_prompts_dir, max_payment=max_payment
         )
         print("✅ LLM-based evaluation enabled (strict mode - no fallback)")
 
     def evaluate_artifact(
-        self,
-        signature: str,
-        task: Dict,
-        artifact_path: str,
-        description: str = ""
+        self, signature: str, task: Dict, artifact_path: str, description: str = ""
     ) -> Tuple[bool, float, str, float]:
         """
         Evaluate a work artifact and determine payment
@@ -73,24 +69,21 @@ class WorkEvaluator:
             Tuple of (accepted, payment, feedback, evaluation_score)
         """
         # Handle both single path and list of paths
-        artifact_paths = [artifact_path] if isinstance(artifact_path, str) else artifact_path
+        artifact_paths = (
+            [artifact_path] if isinstance(artifact_path, str) else artifact_path
+        )
 
         # Check if artifacts exist
         if not any(os.path.exists(path) for path in artifact_paths):
             self._log_evaluation(
                 signature=signature,
-                task_id=task['task_id'],
+                task_id=task["task_id"],
                 artifact_path=artifact_paths[0] if artifact_paths else "none",
                 payment=0.0,
                 feedback="Artifact file not found. No payment awarded.",
-                evaluation_score=0.0
+                evaluation_score=0.0,
             )
-            return (
-                False,
-                0.0,
-                "Artifact file not found. No payment awarded.",
-                0.0
-            )
+            return (False, 0.0, "Artifact file not found. No payment awarded.", 0.0)
 
         # Get file info for primary artifact
         primary_path = artifact_paths[0]
@@ -101,18 +94,13 @@ class WorkEvaluator:
         if file_size == 0:
             self._log_evaluation(
                 signature=signature,
-                task_id=task['task_id'],
+                task_id=task["task_id"],
                 artifact_path=primary_path,
                 payment=0.0,
                 feedback="Artifact file is empty. No payment awarded.",
-                evaluation_score=0.0
+                evaluation_score=0.0,
             )
-            return (
-                False,
-                0.0,
-                "Artifact file is empty. No payment awarded.",
-                0.0
-            )
+            return (False, 0.0, "Artifact file is empty. No payment awarded.", 0.0)
 
         # LLM evaluation only - no fallback
         if not self.use_llm_evaluation or not self.llm_evaluator:
@@ -122,25 +110,25 @@ class WorkEvaluator:
             )
 
         # Get task-specific max payment (fallback to global if not set)
-        task_max_payment = task.get('max_payment', self.max_payment)
+        task_max_payment = task.get("max_payment", self.max_payment)
 
         # Evaluate using LLM with task-specific max payment - let errors propagate
         evaluation_score, feedback, payment = self.llm_evaluator.evaluate_artifact(
             task=task,
             artifact_paths=artifact_paths,
             description=description,
-            max_payment=task_max_payment
+            max_payment=task_max_payment,
         )
 
         # Log LLM evaluation
         self._log_evaluation(
             signature=signature,
-            task_id=task['task_id'],
+            task_id=task["task_id"],
             artifact_path=artifact_paths,  # Pass all paths, not just primary
             payment=payment,
             feedback=feedback,
             evaluation_score=evaluation_score,
-            evaluation_method="llm"
+            evaluation_method="llm",
         )
 
         accepted = payment > 0
@@ -158,10 +146,10 @@ class WorkEvaluator:
         payment: float,
         feedback: str,
         evaluation_score: Optional[float] = None,
-        evaluation_method: str = "heuristic"
+        evaluation_method: str = "heuristic",
     ) -> None:
         """Log evaluation result
-        
+
         Args:
             artifact_path: Single path (str) or list of paths
         """
@@ -181,12 +169,14 @@ class WorkEvaluator:
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "task_id": task_id,
-            "artifact_path": artifact_path if isinstance(artifact_path, str) else artifact_path,  # Keep original format
+            "artifact_path": (
+                artifact_path if isinstance(artifact_path, str) else artifact_path
+            ),  # Keep original format
             "artifact_paths": artifact_paths_list,  # Always include list format for clarity
             "payment": payment,
             "feedback": feedback,
             "evaluation_score": evaluation_score,  # 0.0-1.0 scale
-            "evaluation_method": evaluation_method  # "llm" or "heuristic"
+            "evaluation_method": evaluation_method,  # "llm" or "heuristic"
         }
 
         # Append to log file
@@ -204,10 +194,7 @@ class WorkEvaluator:
             List of evaluation records
         """
         eval_log_file = os.path.join(
-            self.data_path,
-            signature,
-            "work",
-            "evaluations.jsonl"
+            self.data_path, signature, "work", "evaluations.jsonl"
         )
 
         if not os.path.exists(eval_log_file):
@@ -231,7 +218,7 @@ class WorkEvaluator:
             Total earnings
         """
         evaluations = self.get_evaluation_history(signature)
-        return sum(eval['payment'] for eval in evaluations)
+        return sum(eval["payment"] for eval in evaluations)
 
     def __str__(self) -> str:
         return f"WorkEvaluator(max_payment=${self.max_payment})"

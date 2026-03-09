@@ -29,7 +29,7 @@ def test_task_exhaustion():
             "sector": "Test Sector",
             "occupation": "Test Occupation",
             "prompt": f"Test task {i}",
-            "reference_files": []
+            "reference_files": [],
         }
         for i in range(5)
     ]
@@ -37,9 +37,7 @@ def test_task_exhaustion():
     # Initialize TaskManager
     print("\n1. Creating TaskManager with 5 test tasks...")
     task_manager = TaskManager(
-        task_source_type="inline",
-        inline_tasks=test_tasks,
-        task_data_path="./test_data"
+        task_source_type="inline", inline_tasks=test_tasks, task_data_path="./test_data"
     )
 
     # Load tasks
@@ -96,7 +94,7 @@ def test_with_filters():
             "sector": sector,
             "occupation": "Test Occupation",
             "prompt": f"Test task {i}",
-            "reference_files": []
+            "reference_files": [],
         }
         for sector in ["SectorA", "SectorB"]
         for i in range(3)
@@ -108,7 +106,7 @@ def test_with_filters():
         task_source_type="inline",
         inline_tasks=test_tasks,
         task_data_path="./test_data",
-        agent_filters={"sectors": ["SectorA"]}
+        agent_filters={"sectors": ["SectorA"]},
     )
 
     num_tasks = task_manager.load_tasks()

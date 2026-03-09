@@ -1,0 +1,538 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> clawmode_integration/__init__.py:8:1
+   |
+ 6 |   """
+ 7 |
+ 8 | / from clawmode_integration.agent_loop import ClawWorkAgentLoop
+ 9 | | from clawmode_integration.task_classifier import TaskClassifier
+10 | | from clawmode_integration.tools import (
+11 | |     ClawWorkState,
+12 | |     DecideActivityTool,
+13 | |     SubmitWorkTool,
+14 | |     LearnTool,
+15 | |     GetStatusTool,
+16 | | )
+17 | | from clawmode_integration.artifact_tools import CreateArtifactTool, ReadArtifactTool
+18 | | from clawmode_integration.provider_wrapper import TrackedProvider
+   | |_________________________________________________________________^
+19 |
+20 |   __all__ = [
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> clawmode_integration/agent_loop.py:11:1
+   |
+ 9 |   """
+10 |
+11 | / from __future__ import annotations
+12 | |
+13 | | import json
+14 | | import uuid
+15 | | from datetime import datetime
+16 | | from pathlib import Path
+17 | | from typing import Any
+18 | |
+19 | | from loguru import logger
+20 | |
+21 | | from nanobot.agent.loop import AgentLoop
+22 | | from nanobot.bus.events import InboundMessage, OutboundMessage
+23 | | from nanobot.bus.queue import MessageBus
+24 | | from nanobot.providers.base import LLMProvider
+25 | | from nanobot.session.manager import SessionManager
+26 | |
+27 | | from clawmode_integration.provider_wrapper import CostCapturingLiteLLMProvider, TrackedProvider
+28 | | from clawmode_integration.task_classifier import TaskClassifier
+29 | | from clawmode_integration.tools import (
+30 | |     ClawWorkState,
+31 | |     DecideActivityTool,
+32 | |     SubmitWorkTool,
+33 | |     LearnTool,
+34 | |     GetStatusTool,
+35 | | )
+36 | | from clawmode_integration.artifact_tools import CreateArtifactTool, ReadArtifactTool
+   | |____________________________________________________________________________________^
+37 |
+38 |   _CLAWWORK_USAGE = (
+   |
+help: Organize imports
+
+F401 [*] `json` imported but unused
+  --> clawmode_integration/agent_loop.py:13:8
+   |
+11 | from __future__ import annotations
+12 |
+13 | import json
+   |        ^^^^
+14 | import uuid
+15 | from datetime import datetime
+   |
+help: Remove unused import: `json`
+
+F401 [*] `datetime.datetime` imported but unused
+  --> clawmode_integration/agent_loop.py:15:22
+   |
+13 | import json
+14 | import uuid
+15 | from datetime import datetime
+   |                      ^^^^^^^^
+16 | from pathlib import Path
+17 | from typing import Any
+   |
+help: Remove unused import: `datetime.datetime`
+
+F401 [*] `pathlib.Path` imported but unused
+  --> clawmode_integration/agent_loop.py:16:21
+   |
+14 | import uuid
+15 | from datetime import datetime
+16 | from pathlib import Path
+   |                     ^^^^
+17 | from typing import Any
+   |
+help: Remove unused import: `pathlib.Path`
+
+F401 [*] `nanobot.bus.queue.MessageBus` imported but unused
+  --> clawmode_integration/agent_loop.py:23:31
+   |
+21 | from nanobot.agent.loop import AgentLoop
+22 | from nanobot.bus.events import InboundMessage, OutboundMessage
+23 | from nanobot.bus.queue import MessageBus
+   |                               ^^^^^^^^^^
+24 | from nanobot.providers.base import LLMProvider
+25 | from nanobot.session.manager import SessionManager
+   |
+help: Remove unused import: `nanobot.bus.queue.MessageBus`
+
+F401 [*] `nanobot.providers.base.LLMProvider` imported but unused
+  --> clawmode_integration/agent_loop.py:24:36
+   |
+22 | from nanobot.bus.events import InboundMessage, OutboundMessage
+23 | from nanobot.bus.queue import MessageBus
+24 | from nanobot.providers.base import LLMProvider
+   |                                    ^^^^^^^^^^^
+25 | from nanobot.session.manager import SessionManager
+   |
+help: Remove unused import: `nanobot.providers.base.LLMProvider`
+
+F401 [*] `nanobot.session.manager.SessionManager` imported but unused
+  --> clawmode_integration/agent_loop.py:25:37
+   |
+23 | from nanobot.bus.queue import MessageBus
+24 | from nanobot.providers.base import LLMProvider
+25 | from nanobot.session.manager import SessionManager
+   |                                     ^^^^^^^^^^^^^^
+26 |
+27 | from clawmode_integration.provider_wrapper import CostCapturingLiteLLMProvider, TrackedProvider
+   |
+help: Remove unused import: `nanobot.session.manager.SessionManager`
+
+E501 Line too long (95 > 88)
+  --> clawmode_integration/agent_loop.py:27:89
+   |
+25 | from nanobot.session.manager import SessionManager
+26 |
+27 | from clawmode_integration.provider_wrapper import CostCapturingLiteLLMProvider, TrackedProvider
+   |                                                                                         ^^^^^^^
+28 | from clawmode_integration.task_classifier import TaskClassifier
+29 | from clawmode_integration.tools import (
+   |
+
+F841 Local variable `ts` is assigned to but never used
+   --> clawmode_integration/agent_loop.py:222:9
+    |
+221 |         # Run through the normal economic-tracked flow
+222 |         ts = msg.timestamp.strftime("%Y%m%d_%H%M%S")
+    |         ^^
+223 |         tracker = self._lb.economic_tracker
+224 |         tracker.start_task(task_id, date=date_str)
+    |
+help: Remove assignment to unused variable `ts`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> clawmode_integration/artifact_tools.py:11:1
+   |
+ 9 |   """
+10 |
+11 | / from __future__ import annotations
+12 | |
+13 | | import json
+14 | | import os
+15 | | from typing import Any
+16 | |
+17 | | from nanobot.agent.tools.base import Tool
+18 | |
+19 | | from clawmode_integration.tools import ClawWorkState
+   | |____________________________________________________^
+   |
+help: Organize imports
+
+E501 Line too long (108 > 88)
+   --> clawmode_integration/artifact_tools.py:123:89
+    |
+121 |                     df.to_excel(file_path, index=False, engine="openpyxl")
+122 |                 except ImportError:
+123 |                     return json.dumps({"error": "openpyxl not installed. Run: pip install openpyxl pandas"})
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^
+124 |                 except Exception as e:
+125 |                     return json.dumps({"error": f"Failed to create Excel file: {e}"})
+    |
+
+E501 Line too long (107 > 88)
+   --> clawmode_integration/artifact_tools.py:136:89
+    |
+134 |                     doc.save(file_path)
+135 |                 except ImportError:
+136 |                     return json.dumps({"error": "python-docx not installed. Run: pip install python-docx"})
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^
+137 |                 except Exception as e:
+138 |                     return json.dumps({"error": f"Failed to create Word document: {e}"})
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> clawmode_integration/artifact_tools.py:142:21
+    |
+140 |               elif file_type == "pdf":
+141 |                   try:
+142 | /                     from reportlab.lib.pagesizes import letter
+143 | |                     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+144 | |                     from reportlab.lib.styles import getSampleStyleSheet
+    | |________________________________________________________________________^
+145 |
+146 |                       doc = SimpleDocTemplate(file_path, pagesize=letter)
+    |
+help: Organize imports
+
+E501 Line too long (103 > 88)
+   --> clawmode_integration/artifact_tools.py:155:89
+    |
+153 |                     doc.build(story)
+154 |                 except ImportError:
+155 |                     return json.dumps({"error": "reportlab not installed. Run: pip install reportlab"})
+    |                                                                                         ^^^^^^^^^^^^^^^
+156 |                 except Exception as e:
+157 |                     return json.dumps({"error": f"Failed to create PDF: {e}"})
+    |
+
+E501 Line too long (98 > 88)
+   --> clawmode_integration/artifact_tools.py:174:89
+    |
+173 |         except Exception as e:
+174 |             return json.dumps({"error": f"Failed to create file: {e}", "filename": safe_filename})
+    |                                                                                         ^^^^^^^^^^
+    |
+
+E501 Line too long (89 > 88)
+   --> clawmode_integration/artifact_tools.py:205:89
+    |
+203 |                 "filetype": {
+204 |                     "type": "string",
+205 |                     "enum": ["pdf", "docx", "xlsx", "pptx", "png", "jpg", "jpeg", "txt"],
+    |                                                                                         ^
+206 |                     "description": "The type of file to read.",
+207 |                 },
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> clawmode_integration/artifact_tools.py:239:13
+    |
+237 |           try:
+238 |               # Import helper functions from livebench
+239 | /             from livebench.tools.productivity.file_reading import (
+240 | |                 read_docx,
+241 | |                 read_xlsx,
+242 | |                 read_image,
+243 | |                 read_txt,
+244 | |                 read_pdf_as_images,
+245 | |                 read_pdf_ocr,
+246 | |                 read_pptx_as_images,
+247 | |             )
+    | |_____________^
+248 |
+249 |               if filetype == "pdf":
+    |
+help: Organize imports
+
+E501 Line too long (90 > 88)
+  --> clawmode_integration/cli.py:23:89
+   |
+21 | from loguru import logger
+22 |
+23 | app = typer.Typer(name="clawmode", help="ClawMode — nanobot + ClawWork economic tracking")
+   |                                                                                         ^^
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> clawmode_integration/cli.py:82:5
+   |
+80 |       nanobot's own Pydantic schema untouched.
+81 |       """
+82 | /     from livebench.agent.economic_tracker import EconomicTracker
+83 | |     from livebench.work.task_manager import TaskManager
+84 | |     from livebench.work.evaluator import WorkEvaluator
+85 | |     from clawmode_integration.config import load_clawwork_config
+86 | |     from clawmode_integration.tools import ClawWorkState
+   | |________________________________________________________^
+87 |
+88 |       # Inject nanobot credentials so LLMEvaluator can use them
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> clawmode_integration/cli.py:139:5
+    |
+137 |       Returns ``(agent_loop, state, bus)``.
+138 |       """
+139 | /     from nanobot.bus.queue import MessageBus
+140 | |     from nanobot.session.manager import SessionManager
+141 | |     from clawmode_integration.agent_loop import ClawWorkAgentLoop
+    | |_________________________________________________________________^
+142 |
+143 |       bus = MessageBus()
+    |
+help: Organize imports
+
+E501 Line too long (109 > 88)
+   --> clawmode_integration/cli.py:189:89
+    |
+187 | @app.command()
+188 | def agent(
+189 |     message: str = typer.Option(None, "--message", "-m", help="Message to send (omit for interactive mode)"),
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^
+190 |     session_id: str = typer.Option("cli:clawwork", "--session", "-s", help="Session ID"),
+191 |     markdown: bool = typer.Option(True, "--markdown/--no-markdown", help="Render output as Markdown"),
+    |
+
+E501 Line too long (89 > 88)
+   --> clawmode_integration/cli.py:190:89
+    |
+188 | def agent(
+189 |     message: str = typer.Option(None, "--message", "-m", help="Message to send (omit for interactive mode)"),
+190 |     session_id: str = typer.Option("cli:clawwork", "--session", "-s", help="Session ID"),
+    |                                                                                         ^
+191 |     markdown: bool = typer.Option(True, "--markdown/--no-markdown", help="Render output as Markdown"),
+192 |     logs: bool = typer.Option(False, "--logs/--no-logs", help="Show runtime logs"),
+    |
+
+E501 Line too long (102 > 88)
+   --> clawmode_integration/cli.py:191:89
+    |
+189 |     message: str = typer.Option(None, "--message", "-m", help="Message to send (omit for interactive mode)"),
+190 |     session_id: str = typer.Option("cli:clawwork", "--session", "-s", help="Session ID"),
+191 |     markdown: bool = typer.Option(True, "--markdown/--no-markdown", help="Render output as Markdown"),
+    |                                                                                         ^^^^^^^^^^^^^^
+192 |     logs: bool = typer.Option(False, "--logs/--no-logs", help="Show runtime logs"),
+193 | ):
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> clawmode_integration/cli.py:204:5
+    |
+202 |           python -m clawmode_integration.cli agent -m "What is my balance?"
+203 |       """
+204 | /     from rich.console import Console
+205 | |     from nanobot.config.loader import load_config
+    | |_________________________________________________^
+206 |
+207 |       if logs:
+    |
+help: Organize imports
+
+E501 Line too long (91 > 88)
+   --> clawmode_integration/cli.py:277:89
+    |
+276 |                         with _thinking_ctx():
+277 |                             response = await agent_loop.process_direct(command, session_id)
+    |                                                                                         ^^^
+278 |                         _print_response(response)
+279 |                     except (KeyboardInterrupt, EOFError):
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> clawmode_integration/cli.py:307:5
+    |
+305 |       each response.
+306 |       """
+307 | /     from nanobot.config.loader import load_config, get_data_dir
+308 | |     from nanobot.channels.manager import ChannelManager
+309 | |     from nanobot.cron.service import CronService
+    | |________________________________________________^
+310 |
+311 |       _check_clawwork_enabled()
+    |
+help: Organize imports
+
+E501 Line too long (100 > 88)
+  --> clawmode_integration/provider_wrapper.py:31:89
+   |
+29 |         openrouter_cost = getattr(getattr(response, "usage", None), "cost", None)
+30 |         if openrouter_cost is None:
+31 |             openrouter_cost = (getattr(response, "_hidden_params", None) or {}).get("response_cost")
+   |                                                                                         ^^^^^^^^^^^^
+32 |         if openrouter_cost is not None:
+33 |             result.usage["cost"] = openrouter_cost
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> clawmode_integration/task_classifier.py:8:1
+   |
+ 6 |   """
+ 7 |
+ 8 | / from __future__ import annotations
+ 9 | |
+10 | | import json
+11 | | from pathlib import Path
+12 | | from typing import Any
+13 | |
+14 | | from loguru import logger
+   | |_________________________^
+   |
+help: Organize imports
+
+E501 Line too long (89 > 88)
+  --> clawmode_integration/task_classifier.py:21:89
+   |
+19 | _FALLBACK_WAGE = 64.0
+20 |
+21 | _WAGE_MAPPING_PATH = Path("scripts/task_value_estimates/occupation_to_wage_mapping.json")
+   |                                                                                         ^
+22 |
+23 | _CLASSIFICATION_PROMPT = """\
+   |
+
+E501 Line too long (115 > 88)
+  --> clawmode_integration/task_classifier.py:36:89
+   |
+35 | Respond with ONLY this JSON structure:
+36 | {{"occupation": "<exact occupation name from list>", "hours_estimate": <number>, "reasoning": "<one sentence>"}}"""
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+E501 Line too long (98 > 88)
+  --> clawmode_integration/task_classifier.py:55:89
+   |
+53 |         """Load the occupation-to-wage mapping JSON."""
+54 |         if not _WAGE_MAPPING_PATH.exists():
+55 |             logger.warning(f"Wage mapping not found at {_WAGE_MAPPING_PATH}, using fallback only")
+   |                                                                                         ^^^^^^^^^^
+56 |             return
+57 |         try:
+   |
+
+E501 Line too long (90 > 88)
+  --> clawmode_integration/task_classifier.py:64:89
+   |
+62 |                 if name and wage:
+63 |                     self._occupations[name] = float(wage)
+64 |             logger.info(f"Loaded {len(self._occupations)} occupations for classification")
+   |                                                                                         ^^
+65 |         except Exception as exc:
+66 |             logger.error(f"Failed to load occupation mapping: {exc}")
+   |
+
+E501 Line too long (96 > 88)
+  --> clawmode_integration/task_classifier.py:88:89
+   |
+86 |                 return occ, wage
+87 |
+88 |         return _FALLBACK_OCCUPATION, self._occupations.get(_FALLBACK_OCCUPATION, _FALLBACK_WAGE)
+   |                                                                                         ^^^^^^^^
+89 |
+90 |     async def classify(self, instruction: str) -> dict[str, Any]:
+   |
+
+E501 Line too long (91 > 88)
+   --> clawmode_integration/task_classifier.py:140:89
+    |
+139 |             logger.info(
+140 |                 f"Classified: {occupation} | {hours}h x ${wage:.2f}/hr = ${task_value:.2f}"
+    |                                                                                         ^^^
+141 |             )
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> clawmode_integration/tools.py:14:1
+   |
+12 |   """
+13 |
+14 | / from __future__ import annotations
+15 | |
+16 | | import json
+17 | | import os
+18 | | from dataclasses import dataclass, field
+19 | | from datetime import datetime
+20 | | from typing import Any
+21 | |
+22 | | from nanobot.agent.tools.base import Tool
+   | |_________________________________________^
+   |
+help: Organize imports
+
+F401 [*] `dataclasses.field` imported but unused
+  --> clawmode_integration/tools.py:18:36
+   |
+16 | import json
+17 | import os
+18 | from dataclasses import dataclass, field
+   |                                    ^^^^^
+19 | from datetime import datetime
+20 | from typing import Any
+   |
+help: Remove unused import: `dataclasses.field`
+
+E501 Line too long (100 > 88)
+   --> clawmode_integration/tools.py:168:89
+    |
+166 |                 else:
+167 |                     return json.dumps({
+168 |                         "error": f"artifact_file_paths must be a list, got {type(parsed).__name__}",
+    |                                                                                         ^^^^^^^^^^^^
+169 |                     })
+170 |             except json.JSONDecodeError as exc:
+    |
+
+E501 Line too long (92 > 88)
+   --> clawmode_integration/tools.py:171:89
+    |
+169 |                     })
+170 |             except json.JSONDecodeError as exc:
+171 |                 return json.dumps({"error": f"Invalid JSON for artifact_file_paths: {exc}"})
+    |                                                                                         ^^^^
+172 |
+173 |         # Must have at least one of text or files
+    |
+
+E501 Line too long (91 > 88)
+   --> clawmode_integration/tools.py:176:89
+    |
+174 |         if not work_output and not artifact_file_paths:
+175 |             return json.dumps({
+176 |                 "error": "Must provide either work_output or artifact_file_paths, or both",
+    |                                                                                         ^^^
+177 |             })
+    |
+
+E501 Line too long (89 > 88)
+   --> clawmode_integration/tools.py:182:89
+    |
+180 |         if work_output and not artifact_file_paths and len(work_output) < 100:
+181 |             return json.dumps({
+182 |                 "error": "Work output too short (min 100 chars when no files provided).",
+    |                                                                                         ^
+183 |                 "current_length": len(work_output),
+184 |             })
+    |
+
+E501 Line too long (89 > 88)
+   --> clawmode_integration/tools.py:293:89
+    |
+291 |         if len(knowledge) < 200:
+292 |             return json.dumps({
+293 |                 "error": "Knowledge content too short. Minimum 200 characters required.",
+    |                                                                                         ^
+294 |                 "current_length": len(knowledge),
+295 |             })
+    |
+
+Found 42 errors.
+[*] 18 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).

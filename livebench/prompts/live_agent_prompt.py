@@ -14,7 +14,7 @@ def get_live_agent_system_prompt(
     signature: str,
     economic_state: Dict,
     work_task: Optional[Dict] = None,
-    max_steps: int = 15
+    max_steps: int = 15,
 ) -> str:
     """
     Generate system prompt for LiveBench agent with economic awareness
@@ -32,12 +32,12 @@ def get_live_agent_system_prompt(
     """
 
     # Extract economic data
-    balance = economic_state.get('balance', 0)
-    net_worth = economic_state.get('net_worth', balance)
-    total_token_cost = economic_state.get('total_token_cost', 0)
-    session_cost = economic_state.get('session_cost', 0)
-    daily_cost = economic_state.get('daily_cost', 0)
-    survival_status = economic_state.get('survival_status', 'unknown')
+    balance = economic_state.get("balance", 0)
+    net_worth = economic_state.get("net_worth", balance)
+    total_token_cost = economic_state.get("total_token_cost", 0)
+    session_cost = economic_state.get("session_cost", 0)
+    daily_cost = economic_state.get("daily_cost", 0)
+    survival_status = economic_state.get("survival_status", "unknown")
 
     # Calculate days survived (rough estimate)
     # In a real implementation, this would track from initialization
@@ -45,22 +45,22 @@ def get_live_agent_system_prompt(
 
     # Format economic status with appropriate warnings
     status_emoji = {
-        'thriving': '💪',
-        'stable': '👍',
-        'struggling': '⚠️',
-        'bankrupt': '💀'
-    }.get(survival_status, '❓')
+        "thriving": "💪",
+        "stable": "👍",
+        "struggling": "⚠️",
+        "bankrupt": "💀",
+    }.get(survival_status, "❓")
 
     # Build work task section
     work_section = ""
     if work_task:
         # Show FULL task prompt (not truncated)
-        full_prompt = work_task.get('prompt', 'No task description provided')
-        
+        full_prompt = work_task.get("prompt", "No task description provided")
+
         # Show reference files if available
-        reference_files = work_task.get('reference_files', [])
+        reference_files = work_task.get("reference_files", [])
         ref_files_info = ""
-        
+
         # Handle both list and numpy array (from pandas DataFrame)
         has_ref_files = False
         if reference_files is not None:
@@ -68,20 +68,24 @@ def get_live_agent_system_prompt(
                 has_ref_files = len(reference_files) > 0
             except (TypeError, AttributeError):
                 has_ref_files = bool(reference_files)
-        
+
         if has_ref_files:
-            ref_files_list = "\n".join([f"      - {os.path.basename(f)}" for f in reference_files])
-            
+            ref_files_list = "\n".join(
+                [f"      - {os.path.basename(f)}" for f in reference_files]
+            )
+
             # Get sandbox paths if available (provider-neutral, with legacy fallback)
             sandbox_paths = (
-                work_task.get('sandbox_reference_paths')
-                or work_task.get('e2b_reference_paths')
+                work_task.get("sandbox_reference_paths")
+                or work_task.get("e2b_reference_paths")
                 or []
             )
-            sandbox_provider = work_task.get('sandbox_provider', 'sandbox')
+            sandbox_provider = work_task.get("sandbox_provider", "sandbox")
             sandbox_paths_info = ""
             if sandbox_paths:
-                sandbox_paths_list = "\n".join([f"      - {path}" for path in sandbox_paths])
+                sandbox_paths_list = "\n".join(
+                    [f"      - {path}" for path in sandbox_paths]
+                )
                 sandbox_paths_info = f"""
    🔧 Sandbox Paths (provider: {sandbox_provider}, for execute_code_sandbox):
 {sandbox_paths_list}
@@ -89,7 +93,7 @@ def get_live_agent_system_prompt(
    💡 In your Python code, use these paths directly:
       Example: open("{sandbox_paths[0]}", "rb")
       Example: pd.read_excel("{sandbox_paths[0]}")"""
-            
+
             ref_files_info = f"""
    📎 Reference Files Available:
 {ref_files_list}
@@ -108,7 +112,7 @@ def get_live_agent_system_prompt(
    ⚠️ Common mistake: Not reading/using the reference files = automatic low score!"""
         else:
             ref_files_info = "\n   📎 No reference files for this task."
-        
+
         # Calculate recommended submission threshold
         submit_by_iteration = max(max_steps - 3, int(max_steps * 0.7))
 
@@ -131,18 +135,18 @@ def get_live_agent_system_prompt(
 
     # Survival guidance based on status
     survival_guidance = ""
-    if survival_status == 'bankrupt':
+    if survival_status == "bankrupt":
         survival_guidance = """
 🚨 CRITICAL: You are BANKRUPT! Balance is zero or negative.
 You cannot make any more decisions. Your simulation has ended.
 """
-    elif survival_status == 'struggling':
+    elif survival_status == "struggling":
         survival_guidance = """
 ⚠️ WARNING: Your balance is critically low!
 You must be extremely efficient with token usage and focus on high-value activities.
 Consider: Which activity will give you the best return on investment?
 """
-    elif survival_status == 'stable':
+    elif survival_status == "stable":
         survival_guidance = """
 👍 Your balance is stable but not comfortable.
 Be mindful of token costs and aim to increase your net worth.
@@ -417,7 +421,7 @@ def get_work_task_prompt(task: Dict, reference_files: list, max_steps: int = 15)
         Formatted task prompt
     """
     ref_files_str = "\n".join([f"   - {f}" for f in reference_files])
-    
+
     # Calculate recommended submission threshold (2-3 iterations before limit)
     submit_by_iteration = max(max_steps - 3, int(max_steps * 0.7))
 

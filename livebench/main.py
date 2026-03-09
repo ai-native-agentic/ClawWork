@@ -30,7 +30,9 @@ def load_config(config_path: str) -> dict:
         return json.load(f)
 
 
-async def run_agent(agent: LiveAgent, init_date: str, end_date: str, exhaust: bool = False):
+async def run_agent(
+    agent: LiveAgent, init_date: str, end_date: str, exhaust: bool = False
+):
     """Run a single agent"""
     try:
         await agent.initialize()
@@ -42,6 +44,7 @@ async def run_agent(agent: LiveAgent, init_date: str, end_date: str, exhaust: bo
     except Exception as e:
         print(f"❌ Error running agent {agent.signature}: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -60,21 +63,25 @@ async def main(config_path: str, exhaust: bool = False):
     end_date = os.getenv("END_DATE") or lb_config["date_range"]["end_date"]
 
     if exhaust:
-        print(f"🔥 Mode: EXHAUST — running all GDPVal tasks (start: {init_date}, ignoring end_date)")
+        print(
+            f"🔥 Mode: EXHAUST — running all GDPVal tasks (start: {init_date}, ignoring end_date)"
+        )
     else:
         print(f"📅 Date Range: {init_date} to {end_date}")
     print(f"💰 Starting Balance: ${lb_config['economic']['initial_balance']}")
 
     # Show task pricing configuration
-    task_values_path = lb_config.get('economic', {}).get('task_values_path')
+    task_values_path = lb_config.get("economic", {}).get("task_values_path")
     if task_values_path:
         print(f"💼 Task Pricing: Real task values from {task_values_path}")
     else:
-        default_payment = lb_config.get('economic', {}).get('max_work_payment', 50.0)
+        default_payment = lb_config.get("economic", {}).get("max_work_payment", 50.0)
         print(f"💼 Task Pricing: Uniform ${default_payment} per task (default)")
 
-    print(f"💸 Token Pricing: ${lb_config['economic']['token_pricing']['input_per_1m']}/1M input, "
-          f"${lb_config['economic']['token_pricing']['output_per_1m']}/1M output")
+    print(
+        f"💸 Token Pricing: ${lb_config['economic']['token_pricing']['input_per_1m']}/1M input, "
+        f"${lb_config['economic']['token_pricing']['output_per_1m']}/1M output"
+    )
 
     # Parse task source configuration
     task_source_config = {}
@@ -84,7 +91,7 @@ async def main(config_path: str, exhaust: bool = False):
         task_source_config = {
             "task_source_type": task_source["type"],
             "task_source_path": task_source.get("path"),
-            "inline_tasks": task_source.get("tasks")
+            "inline_tasks": task_source.get("tasks"),
         }
         print(f"📋 Task Source: {task_source['type']}")
         if task_source.get("path"):
@@ -93,11 +100,13 @@ async def main(config_path: str, exhaust: bool = False):
             print(f"   Inline tasks: {len(task_source['tasks'])}")
     elif "gdpval_path" in lb_config:
         # Legacy configuration format (backwards compatibility)
-        print("⚠️ DEPRECATION WARNING: 'gdpval_path' is deprecated. Use 'task_source' instead.")
+        print(
+            "⚠️ DEPRECATION WARNING: 'gdpval_path' is deprecated. Use 'task_source' instead."
+        )
         task_source_config = {
             "task_source_type": "parquet",
             "task_source_path": lb_config["gdpval_path"],
-            "inline_tasks": None
+            "inline_tasks": None,
         }
         print(f"📋 Task Source: parquet (legacy)")
         print(f"   Path: {lb_config['gdpval_path']}")
@@ -106,7 +115,7 @@ async def main(config_path: str, exhaust: bool = False):
         task_source_config = {
             "task_source_type": "parquet",
             "task_source_path": "./gdpval",
-            "inline_tasks": None
+            "inline_tasks": None,
         }
         print(f"📋 Task Source: parquet (default)")
 
@@ -125,8 +134,10 @@ async def main(config_path: str, exhaust: bool = False):
         if "task_filters" in agent_config:
             print(f"     Filters: {agent_config['task_filters']}")
         if "task_assignment" in agent_config:
-            print(f"     Assignment: {agent_config['task_assignment']['mode']} "
-                  f"({len(agent_config['task_assignment']['task_ids'])} tasks)")
+            print(
+                f"     Assignment: {agent_config['task_assignment']['mode']} "
+                f"({len(agent_config['task_assignment']['task_ids'])} tasks)"
+            )
     print()
 
     # Create and run agents
@@ -139,15 +150,19 @@ async def main(config_path: str, exhaust: bool = False):
         # Extract agent-specific task configuration
         agent_filters = agent_config.get("task_filters", None)
         agent_assignment = agent_config.get("task_assignment", None)
-        
+
         # Get evaluation configuration
         evaluation_config = lb_config.get("evaluation", {})
         use_llm_evaluation = evaluation_config.get("use_llm_evaluation", True)
-        meta_prompts_dir = evaluation_config.get("meta_prompts_dir", "./eval/meta_prompts")
-        
+        meta_prompts_dir = evaluation_config.get(
+            "meta_prompts_dir", "./eval/meta_prompts"
+        )
+
         # Get tasks_per_day (agent-specific or global default)
-        tasks_per_day = agent_config.get("tasks_per_day") or lb_config["agent_params"].get("tasks_per_day", 1)
-        
+        tasks_per_day = agent_config.get("tasks_per_day") or lb_config[
+            "agent_params"
+        ].get("tasks_per_day", 1)
+
         # Get multimodal support (agent-specific, defaults to True for backward compatibility)
         supports_multimodal = agent_config.get("supports_multimodal", True)
 
@@ -155,7 +170,9 @@ async def main(config_path: str, exhaust: bool = False):
         task_values_path = lb_config.get("economic", {}).get("task_values_path", None)
 
         # Get default max payment (optional, for backward compatibility)
-        default_max_payment = lb_config.get("economic", {}).get("max_work_payment", 50.0)
+        default_max_payment = lb_config.get("economic", {}).get(
+            "max_work_payment", 50.0
+        )
 
         # Create agent
         agent = LiveAgent(
@@ -167,7 +184,7 @@ async def main(config_path: str, exhaust: bool = False):
             max_work_payment=default_max_payment,
             data_path=os.path.join(
                 lb_config.get("data_path", "./livebench/data/agent_data"),
-                agent_config["signature"]
+                agent_config["signature"],
             ),
             max_steps=lb_config["agent_params"]["max_steps"],
             max_retries=lb_config["agent_params"]["max_retries"],
@@ -187,15 +204,12 @@ async def main(config_path: str, exhaust: bool = False):
             # Pass tasks_per_day
             tasks_per_day=tasks_per_day,
             # Pass multimodal support
-            supports_multimodal=supports_multimodal
+            supports_multimodal=supports_multimodal,
         )
 
         # Run agent
         success = await run_agent(agent, init_date, end_date, exhaust=exhaust)
-        results.append({
-            "signature": agent_config["signature"],
-            "success": success
-        })
+        results.append({"signature": agent_config["signature"], "success": success})
 
     # Print overall summary
     print(f"\n{'='*60}")
@@ -209,12 +223,14 @@ async def main(config_path: str, exhaust: bool = False):
 
 if __name__ == "__main__":
     # Parse arguments
-    parser = argparse.ArgumentParser(description="LiveBench - AI Agent Economic Survival Simulation")
+    parser = argparse.ArgumentParser(
+        description="LiveBench - AI Agent Economic Survival Simulation"
+    )
     parser.add_argument(
         "config",
         nargs="?",
         default="livebench/configs/default_config.json",
-        help="Path to configuration file (default: livebench/configs/default_config.json)"
+        help="Path to configuration file (default: livebench/configs/default_config.json)",
     )
     parser.add_argument(
         "--exhaust",
@@ -224,7 +240,7 @@ if __name__ == "__main__":
             "Exhaust mode: run every GDPVal task to completion, retrying API failures "
             "up to 10 times per task. Date advances past the config end_date as needed. "
             "Stops when all tasks have been conducted or each has failed 10 times."
-        )
+        ),
     )
 
     args = parser.parse_args()
@@ -243,5 +259,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Fatal error: {str(e)}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

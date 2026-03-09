@@ -10,6 +10,7 @@ from typing import Dict, Any
 def _get_global_state():
     """Get global state from parent module"""
     from livebench.tools.direct_tools import _global_state
+
     return _global_state
 
 
@@ -44,7 +45,7 @@ def execute_code(code: str, language: str = "python") -> Dict[str, Any]:
     if language != "python":
         return {
             "error": f"Language '{language}' not supported",
-            "supported_languages": ["python"]
+            "supported_languages": ["python"],
         }
 
     # Get sandbox directory
@@ -62,11 +63,7 @@ def execute_code(code: str, language: str = "python") -> Dict[str, Any]:
     # Create temporary file for code
     try:
         with tempfile.NamedTemporaryFile(
-            mode='w',
-            suffix='.py',
-            dir=sandbox_dir,
-            delete=False,
-            encoding='utf-8'
+            mode="w", suffix=".py", dir=sandbox_dir, delete=False, encoding="utf-8"
         ) as f:
             code_file = f.name
 
@@ -108,7 +105,7 @@ open = _safe_open
                 env={
                     **os.environ,
                     "PYTHONDONTWRITEBYTECODE": "1",  # Don't create .pyc files
-                }
+                },
             )
 
             return {
@@ -117,20 +114,24 @@ open = _safe_open
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "sandbox_dir": sandbox_dir,
-                "message": f"✅ Code executed (exit code: {result.returncode})" if result.returncode == 0 else f"❌ Execution failed (exit code: {result.returncode})"
+                "message": (
+                    f"✅ Code executed (exit code: {result.returncode})"
+                    if result.returncode == 0
+                    else f"❌ Execution failed (exit code: {result.returncode})"
+                ),
             }
 
         except subprocess.TimeoutExpired:
             return {
                 "success": False,
                 "error": "Execution timeout (30 seconds limit)",
-                "sandbox_dir": sandbox_dir
+                "sandbox_dir": sandbox_dir,
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": f"Execution failed: {str(e)}",
-                "sandbox_dir": sandbox_dir
+                "sandbox_dir": sandbox_dir,
             }
         finally:
             # Clean up code file
@@ -142,5 +143,5 @@ open = _safe_open
     except Exception as e:
         return {
             "success": False,
-            "error": f"Failed to prepare code execution: {str(e)}"
+            "error": f"Failed to prepare code execution: {str(e)}",
         }

@@ -38,11 +38,7 @@ def start_livebench_services():
     try:
         cmd = ["mcp", "run-http", str(script_path), "--port", livebench_port]
         process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            env=env
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
         )
 
         # Wait a bit to see if it starts
@@ -73,7 +69,9 @@ def start_livebench_services():
     # Fallback: Run directly with Python using fastmcp
     print("\n📦 Installing fastmcp if needed...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "fastmcp"], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-q", "fastmcp"], check=True
+        )
     except:
         print("❌ Failed to install fastmcp")
         print("\nPlease install manually:")
@@ -81,13 +79,20 @@ def start_livebench_services():
         sys.exit(1)
 
     # Now run with fastmcp
-    cmd = [sys.executable, "-m", "fastmcp", "run", str(script_path), "--transport", "streamable_http", "--port", livebench_port]
+    cmd = [
+        sys.executable,
+        "-m",
+        "fastmcp",
+        "run",
+        str(script_path),
+        "--transport",
+        "streamable_http",
+        "--port",
+        livebench_port,
+    ]
 
     try:
-        process = subprocess.Popen(
-            cmd,
-            env=env
-        )
+        process = subprocess.Popen(cmd, env=env)
 
         print(f"✅ LiveBench Tools started (PID: {process.pid})")
         print(f"   URL: http://localhost:{livebench_port}/mcp")
@@ -113,4 +118,3 @@ def start_livebench_services():
 
 if __name__ == "__main__":
     start_livebench_services()
-

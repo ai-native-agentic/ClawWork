@@ -64,20 +64,15 @@ class MultiServerMCPClient:
 
         headers = {
             "Accept": "application/json, text/event-stream",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
             # List available tools
             response = await client.post(
                 url,
-                json={
-                    "jsonrpc": "2.0",
-                    "id": 1,
-                    "method": "tools/list",
-                    "params": {}
-                },
-                headers=headers
+                json={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}},
+                headers=headers,
             )
 
             if response.status_code != 200:
@@ -102,7 +97,7 @@ class MultiServerMCPClient:
                     server_url=url,
                     tool_name=tool_name,
                     tool_desc=tool_desc,
-                    tool_schema=tool_schema
+                    tool_schema=tool_schema,
                 )
                 tools.append(langchain_tool)
 
@@ -114,7 +109,7 @@ class MultiServerMCPClient:
         server_url: str,
         tool_name: str,
         tool_desc: str,
-        tool_schema: Dict[str, Any]
+        tool_schema: Dict[str, Any],
     ):
         """Create a LangChain Tool from MCP tool definition"""
 
@@ -123,7 +118,7 @@ class MultiServerMCPClient:
             """Execute MCP tool call"""
             headers = {
                 "Accept": "application/json, text/event-stream",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             }
 
             async with httpx.AsyncClient(timeout=60.0, trust_env=False) as client:
@@ -133,12 +128,9 @@ class MultiServerMCPClient:
                         "jsonrpc": "2.0",
                         "id": 1,
                         "method": "tools/call",
-                        "params": {
-                            "name": tool_name,
-                            "arguments": kwargs
-                        }
+                        "params": {"name": tool_name, "arguments": kwargs},
                     },
-                    headers=headers
+                    headers=headers,
                 )
 
                 if response.status_code != 200:

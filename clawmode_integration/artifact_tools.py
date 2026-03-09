@@ -18,10 +18,10 @@ from nanobot.agent.tools.base import Tool
 
 from clawmode_integration.tools import ClawWorkState
 
-
 # ---------------------------------------------------------------------------
 # CreateArtifactTool
 # ---------------------------------------------------------------------------
+
 
 class CreateArtifactTool(Tool):
     """Create a work artifact file in the sandbox directory."""
@@ -79,10 +79,12 @@ class CreateArtifactTool(Tool):
 
         valid_types = ["txt", "md", "csv", "json", "xlsx", "docx", "pdf"]
         if file_type not in valid_types:
-            return json.dumps({
-                "error": f"Invalid file type: {file_type}",
-                "valid_types": valid_types,
-            })
+            return json.dumps(
+                {
+                    "error": f"Invalid file type: {file_type}",
+                    "valid_types": valid_types,
+                }
+            )
 
         data_path = self._state.data_path
         date = self._state.current_date
@@ -112,36 +114,43 @@ class CreateArtifactTool(Tool):
             elif file_type == "xlsx":
                 try:
                     import pandas as pd
+
                     try:
                         data = json_lib.loads(content)
                         df = pd.DataFrame(data)
                     except Exception:
                         import io
+
                         df = pd.read_csv(io.StringIO(content))
                     df.to_excel(file_path, index=False, engine="openpyxl")
                 except ImportError:
-                    return json.dumps({"error": "openpyxl not installed. Run: pip install openpyxl pandas"})
+                    return json.dumps(
+                        {"error": "openpyxl not installed. Run: pip install openpyxl pandas"}
+                    )
                 except Exception as e:
                     return json.dumps({"error": f"Failed to create Excel file: {e}"})
 
             elif file_type == "docx":
                 try:
                     from docx import Document
+
                     doc = Document()
                     for para in content.split("\n\n"):
                         if para.strip():
                             doc.add_paragraph(para.strip())
                     doc.save(file_path)
                 except ImportError:
-                    return json.dumps({"error": "python-docx not installed. Run: pip install python-docx"})
+                    return json.dumps(
+                        {"error": "python-docx not installed. Run: pip install python-docx"}
+                    )
                 except Exception as e:
                     return json.dumps({"error": f"Failed to create Word document: {e}"})
 
             elif file_type == "pdf":
                 try:
                     from reportlab.lib.pagesizes import letter
-                    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
                     from reportlab.lib.styles import getSampleStyleSheet
+                    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
                     doc = SimpleDocTemplate(file_path, pagesize=letter)
                     styles = getSampleStyleSheet()
@@ -152,23 +161,27 @@ class CreateArtifactTool(Tool):
                             story.append(Spacer(1, 12))
                     doc.build(story)
                 except ImportError:
-                    return json.dumps({"error": "reportlab not installed. Run: pip install reportlab"})
+                    return json.dumps(
+                        {"error": "reportlab not installed. Run: pip install reportlab"}
+                    )
                 except Exception as e:
                     return json.dumps({"error": f"Failed to create PDF: {e}"})
 
             file_size = os.path.getsize(file_path)
-            return json.dumps({
-                "success": True,
-                "filename": f"{safe_filename}.{file_type}",
-                "file_path": file_path,
-                "file_type": file_type,
-                "file_size": file_size,
-                "message": (
-                    f"Created {file_type.upper()} file: {safe_filename}.{file_type} "
-                    f"({file_size} bytes). To submit as work artifact, call "
-                    f'submit_work(artifact_file_paths=["{file_path}"])'
-                ),
-            })
+            return json.dumps(
+                {
+                    "success": True,
+                    "filename": f"{safe_filename}.{file_type}",
+                    "file_path": file_path,
+                    "file_type": file_type,
+                    "file_size": file_size,
+                    "message": (
+                        f"Created {file_type.upper()} file: {safe_filename}.{file_type} "
+                        f"({file_size} bytes). To submit as work artifact, call "
+                        f'submit_work(artifact_file_paths=["{file_path}"])'
+                    ),
+                }
+            )
 
         except Exception as e:
             return json.dumps({"error": f"Failed to create file: {e}", "filename": safe_filename})
@@ -177,6 +190,7 @@ class CreateArtifactTool(Tool):
 # ---------------------------------------------------------------------------
 # ReadArtifactTool
 # ---------------------------------------------------------------------------
+
 
 class ReadArtifactTool(Tool):
     """Read a file and return its content."""
@@ -202,7 +216,16 @@ class ReadArtifactTool(Tool):
             "properties": {
                 "filetype": {
                     "type": "string",
-                    "enum": ["pdf", "docx", "xlsx", "pptx", "png", "jpg", "jpeg", "txt"],
+                    "enum": [
+                        "pdf",
+                        "docx",
+                        "xlsx",
+                        "pptx",
+                        "png",
+                        "jpg",
+                        "jpeg",
+                        "txt",
+                    ],
                     "description": "The type of file to read.",
                 },
                 "file_path": {
@@ -229,21 +252,23 @@ class ReadArtifactTool(Tool):
 
         supported = ("pdf", "docx", "xlsx", "pptx", "png", "jpg", "jpeg", "txt")
         if filetype not in supported:
-            return json.dumps({
-                "error": f"Unsupported file type: {filetype}",
-                "supported_types": list(supported),
-            })
+            return json.dumps(
+                {
+                    "error": f"Unsupported file type: {filetype}",
+                    "supported_types": list(supported),
+                }
+            )
 
         try:
             # Import helper functions from livebench
             from livebench.tools.productivity.file_reading import (
                 read_docx,
-                read_xlsx,
                 read_image,
-                read_txt,
                 read_pdf_as_images,
                 read_pdf_ocr,
                 read_pptx_as_images,
+                read_txt,
+                read_xlsx,
             )
 
             if filetype == "pdf":
@@ -251,40 +276,48 @@ class ReadArtifactTool(Tool):
                 if supports_multimodal:
                     images = read_pdf_as_images(file_path)
                     if images:
-                        return json.dumps({
-                            "type": "pdf_images",
-                            "image_count": len(images),
-                            "approximate_pages": len(images) * 4,
-                            "message": (
-                                f"PDF loaded as {len(images)} combined images "
-                                f"(4 pages per image)."
-                            ),
-                        })
+                        return json.dumps(
+                            {
+                                "type": "pdf_images",
+                                "image_count": len(images),
+                                "approximate_pages": len(images) * 4,
+                                "message": (
+                                    f"PDF loaded as {len(images)} combined images "
+                                    f"(4 pages per image)."
+                                ),
+                            }
+                        )
                     else:
-                        return json.dumps({
-                            "error": (
-                                "PDF conversion failed. Ensure poppler-utils "
-                                "and pdf2image are installed."
-                            ),
-                        })
+                        return json.dumps(
+                            {
+                                "error": (
+                                    "PDF conversion failed. Ensure poppler-utils "
+                                    "and pdf2image are installed."
+                                ),
+                            }
+                        )
                 else:
                     # OCR path — check for API key at runtime
                     api_key = os.environ.get("OCR_VLLM_API_KEY")
                     if not api_key:
-                        return json.dumps({
-                            "error": (
-                                "OCR_VLLM_API_KEY environment variable not set. "
-                                "Required for PDF reading on non-multimodal models. "
-                                "Set it to your Qwen VL OCR API key, or enable "
-                                "multimodal support for your model."
-                            ),
-                        })
+                        return json.dumps(
+                            {
+                                "error": (
+                                    "OCR_VLLM_API_KEY environment variable not set. "
+                                    "Required for PDF reading on non-multimodal models. "
+                                    "Set it to your Qwen VL OCR API key, or enable "
+                                    "multimodal support for your model."
+                                ),
+                            }
+                        )
                     text = read_pdf_ocr(file_path)
-                    return json.dumps({
-                        "type": "text",
-                        "text": text,
-                        "message": "PDF processed via OCR.",
-                    })
+                    return json.dumps(
+                        {
+                            "type": "text",
+                            "text": text,
+                            "message": "PDF processed via OCR.",
+                        }
+                    )
 
             elif filetype == "docx":
                 text = read_docx(file_path)
@@ -297,26 +330,32 @@ class ReadArtifactTool(Tool):
             elif filetype == "pptx":
                 images = read_pptx_as_images(file_path)
                 if images:
-                    return json.dumps({
-                        "type": "pptx_images",
-                        "slide_count": len(images),
-                        "message": f"PPTX loaded with {len(images)} slides.",
-                    })
+                    return json.dumps(
+                        {
+                            "type": "pptx_images",
+                            "slide_count": len(images),
+                            "message": f"PPTX loaded with {len(images)} slides.",
+                        }
+                    )
                 else:
-                    return json.dumps({
-                        "error": (
-                            "PPTX conversion failed. Ensure LibreOffice "
-                            "and pdf2image are installed."
-                        ),
-                    })
+                    return json.dumps(
+                        {
+                            "error": (
+                                "PPTX conversion failed. Ensure LibreOffice "
+                                "and pdf2image are installed."
+                            ),
+                        }
+                    )
 
             elif filetype in ("png", "jpg", "jpeg"):
                 image_data = read_image(file_path, filetype)
-                return json.dumps({
-                    "type": "image",
-                    "image_data": image_data,
-                    "message": "Image file loaded.",
-                })
+                return json.dumps(
+                    {
+                        "type": "image",
+                        "image_data": image_data,
+                        "message": "Image file loaded.",
+                    }
+                )
 
             elif filetype == "txt":
                 text = read_txt(file_path)

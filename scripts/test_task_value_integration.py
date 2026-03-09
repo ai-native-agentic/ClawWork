@@ -21,16 +21,16 @@ import json
 
 def test_task_manager_loading():
     """Test that TaskManager loads and applies task values correctly"""
-    print("="*60)
+    print("=" * 60)
     print("TEST 1: TaskManager Task Value Loading")
-    print("="*60)
+    print("=" * 60)
 
     # Initialize TaskManager with task values
     task_manager = TaskManager(
         task_source_type="parquet",
         task_source_path="./gdpval",
         task_values_path="./scripts/task_value_estimates/task_values.jsonl",
-        default_max_payment=50.0
+        default_max_payment=50.0,
     )
 
     # Load tasks
@@ -50,17 +50,19 @@ def test_task_manager_loading():
     # Select a task and verify it has max_payment
     task = task_manager.select_daily_task(date="2025-01-20")
 
-    if 'max_payment' in task:
+    if "max_payment" in task:
         print(f"\n✅ Task has max_payment field: ${task['max_payment']:.2f}")
         print(f"   Task ID: {task['task_id']}")
         print(f"   Occupation: {task['occupation']}")
 
         # Verify it matches the loaded value
-        expected = task_manager.task_values.get(task['task_id'], 50.0)
-        if abs(task['max_payment'] - expected) < 0.01:
+        expected = task_manager.task_values.get(task["task_id"], 50.0)
+        if abs(task["max_payment"] - expected) < 0.01:
             print(f"✅ Payment matches expected value")
         else:
-            print(f"❌ Payment mismatch: got ${task['max_payment']:.2f}, expected ${expected:.2f}")
+            print(
+                f"❌ Payment mismatch: got ${task['max_payment']:.2f}, expected ${expected:.2f}"
+            )
             return False
     else:
         print("❌ Task missing max_payment field!")
@@ -71,15 +73,15 @@ def test_task_manager_loading():
 
 def test_fallback_behavior():
     """Test fallback to default payment when values not available"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: Fallback to Default Payment")
-    print("="*60)
+    print("=" * 60)
 
     # Initialize without task values path
     task_manager = TaskManager(
         task_source_type="parquet",
         task_source_path="./gdpval",
-        default_max_payment=50.0
+        default_max_payment=50.0,
     )
 
     num_tasks = task_manager.load_tasks()
@@ -87,7 +89,7 @@ def test_fallback_behavior():
 
     task = task_manager.select_daily_task(date="2025-01-21")
 
-    if task.get('max_payment') == 50.0:
+    if task.get("max_payment") == 50.0:
         print(f"✅ Uses default payment: ${task['max_payment']:.2f}")
     else:
         print(f"❌ Unexpected payment: ${task.get('max_payment')}")
@@ -98,25 +100,25 @@ def test_fallback_behavior():
 
 def test_evaluator_integration():
     """Test that WorkEvaluator respects task-specific max_payment"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: WorkEvaluator Integration")
-    print("="*60)
+    print("=" * 60)
 
     # Create evaluator with default max payment
     evaluator = WorkEvaluator(
         max_payment=50.0,
         data_path="./test_data",
         use_llm_evaluation=True,
-        meta_prompts_dir="./eval/meta_prompts"
+        meta_prompts_dir="./eval/meta_prompts",
     )
 
     # Create test task with custom max_payment
     test_task = {
-        'task_id': 'test-001',
-        'occupation': 'Software Developers',
-        'sector': 'Technology',
-        'prompt': 'Test task',
-        'max_payment': 157.36  # Task-specific value
+        "task_id": "test-001",
+        "occupation": "Software Developers",
+        "sector": "Technology",
+        "prompt": "Test task",
+        "max_payment": 157.36,  # Task-specific value
     }
 
     print(f"\n✅ Created test task with max_payment: ${test_task['max_payment']:.2f}")
@@ -131,9 +133,9 @@ def test_evaluator_integration():
 
 def test_task_value_file_content():
     """Test that task_values.jsonl has correct structure"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 4: Task Values File Structure")
-    print("="*60)
+    print("=" * 60)
 
     task_values_path = "./scripts/task_value_estimates/task_values.jsonl"
 
@@ -148,14 +150,20 @@ def test_task_value_file_content():
     total_entries = 0
     sample_entries = []
 
-    with open(task_values_path, 'r') as f:
+    with open(task_values_path, "r") as f:
         for i, line in enumerate(f):
             total_entries += 1
             try:
                 entry = json.loads(line.strip())
 
                 # Check required fields
-                required_fields = ['task_id', 'task_value_usd', 'occupation', 'hours_estimate', 'hourly_wage']
+                required_fields = [
+                    "task_id",
+                    "task_value_usd",
+                    "occupation",
+                    "hours_estimate",
+                    "hourly_wage",
+                ]
                 if all(field in entry for field in required_fields):
                     valid_entries += 1
                     if i < 3:  # Save first 3 as samples
@@ -173,22 +181,24 @@ def test_task_value_file_content():
         print(f"\nSample entries:")
         for entry in sample_entries:
             print(f"   - {entry['occupation']}: ${entry['task_value_usd']:.2f}")
-            print(f"     (hours: {entry['hours_estimate']}, wage: ${entry['hourly_wage']}/hr)")
+            print(
+                f"     (hours: {entry['hours_estimate']}, wage: ${entry['hourly_wage']}/hr)"
+            )
 
     return valid_entries == total_entries
 
 
 def main():
     """Run all tests"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 TASK VALUE INTEGRATION TESTS")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     tests = [
         ("Task Manager Loading", test_task_manager_loading),
         ("Fallback Behavior", test_fallback_behavior),
         ("Evaluator Integration", test_evaluator_integration),
-        ("Task Values File", test_task_value_file_content)
+        ("Task Values File", test_task_value_file_content),
     ]
 
     results = []
@@ -199,13 +209,14 @@ def main():
         except Exception as e:
             print(f"\n❌ Test '{name}' failed with exception: {e}")
             import traceback
+
             traceback.print_exc()
             results.append((name, False))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     for name, success in results:
         status = "✅ PASS" if success else "❌ FAIL"
@@ -213,7 +224,7 @@ def main():
 
     total_passed = sum(1 for _, success in results if success)
     print(f"\n   Total: {total_passed}/{len(results)} tests passed")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     return all(success for _, success in results)
 

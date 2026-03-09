@@ -10,6 +10,7 @@ from typing import Dict, Any
 def _get_global_state():
     """Get global state from parent module"""
     from livebench.tools.direct_tools import _global_state
+
     return _global_state
 
 
@@ -42,10 +43,7 @@ def create_file(filename: str, content: str, file_type: str = "txt") -> Dict[str
     valid_types = ["txt", "md", "csv", "json", "xlsx", "docx", "pdf"]
 
     if file_type not in valid_types:
-        return {
-            "error": f"Invalid file type: {file_type}",
-            "valid_types": valid_types
-        }
+        return {"error": f"Invalid file type: {file_type}", "valid_types": valid_types}
 
     # Get sandbox directory
     _global_state = _get_global_state()
@@ -61,7 +59,7 @@ def create_file(filename: str, content: str, file_type: str = "txt") -> Dict[str
 
     # Sanitize filename (remove path traversal attempts)
     safe_filename = os.path.basename(filename)
-    safe_filename = safe_filename.replace('/', '_').replace('\\', '_')
+    safe_filename = safe_filename.replace("/", "_").replace("\\", "_")
 
     # Create full path
     file_path = os.path.join(sandbox_dir, f"{safe_filename}.{file_type}")
@@ -86,6 +84,7 @@ def create_file(filename: str, content: str, file_type: str = "txt") -> Dict[str
             # Excel files - requires openpyxl
             try:
                 import pandas as pd
+
                 # Assume content is CSV-like or JSON
                 try:
                     # Try parsing as JSON for structured data
@@ -94,11 +93,14 @@ def create_file(filename: str, content: str, file_type: str = "txt") -> Dict[str
                 except:
                     # Fall back to CSV parsing
                     import io
+
                     df = pd.read_csv(io.StringIO(content))
 
-                df.to_excel(file_path, index=False, engine='openpyxl')
+                df.to_excel(file_path, index=False, engine="openpyxl")
             except ImportError:
-                return {"error": "openpyxl not installed. Run: pip install openpyxl pandas"}
+                return {
+                    "error": "openpyxl not installed. Run: pip install openpyxl pandas"
+                }
             except Exception as e:
                 return {"error": f"Failed to create Excel file: {str(e)}"}
 
@@ -106,17 +108,20 @@ def create_file(filename: str, content: str, file_type: str = "txt") -> Dict[str
             # Word documents - requires python-docx
             try:
                 from docx import Document
+
                 doc = Document()
 
                 # Split content by paragraphs
-                paragraphs = content.split('\n\n')
+                paragraphs = content.split("\n\n")
                 for para in paragraphs:
                     if para.strip():
                         doc.add_paragraph(para.strip())
 
                 doc.save(file_path)
             except ImportError:
-                return {"error": "python-docx not installed. Run: pip install python-docx"}
+                return {
+                    "error": "python-docx not installed. Run: pip install python-docx"
+                }
             except Exception as e:
                 return {"error": f"Failed to create Word document: {str(e)}"}
 
@@ -132,10 +137,10 @@ def create_file(filename: str, content: str, file_type: str = "txt") -> Dict[str
                 story = []
 
                 # Split content by paragraphs
-                paragraphs = content.split('\n\n')
+                paragraphs = content.split("\n\n")
                 for para in paragraphs:
                     if para.strip():
-                        story.append(Paragraph(para.strip(), styles['Normal']))
+                        story.append(Paragraph(para.strip(), styles["Normal"]))
                         story.append(Spacer(1, 12))
 
                 doc.build(story)
@@ -153,11 +158,8 @@ def create_file(filename: str, content: str, file_type: str = "txt") -> Dict[str
             "file_path": file_path,
             "file_type": file_type,
             "file_size": file_size,
-            "message": f"✅ Created {file_type.upper()} file: {safe_filename}.{file_type} ({file_size} bytes)\n\n⚠️ IMPORTANT: To submit this file as your work artifact, you MUST:\n1. Collect the file_path from this result: {file_path}\n2. Call submit_work(artifact_file_paths=[\"{file_path}\"]) or\n3. If creating multiple files, collect all paths and submit together:\n   submit_work(artifact_file_paths=[\"path1\", \"path2\", ...])"
+            "message": f'✅ Created {file_type.upper()} file: {safe_filename}.{file_type} ({file_size} bytes)\n\n⚠️ IMPORTANT: To submit this file as your work artifact, you MUST:\n1. Collect the file_path from this result: {file_path}\n2. Call submit_work(artifact_file_paths=["{file_path}"]) or\n3. If creating multiple files, collect all paths and submit together:\n   submit_work(artifact_file_paths=["path1", "path2", ...])',
         }
 
     except Exception as e:
-        return {
-            "error": f"Failed to create file: {str(e)}",
-            "filename": safe_filename
-        }
+        return {"error": f"Failed to create file: {str(e)}", "filename": safe_filename}

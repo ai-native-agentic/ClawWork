@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0 -- /Users/kjs/projects/ai-native-agentic/ClawWork/venv/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /Users/kjs/projects/ai-native-agentic/ClawWork
+plugins: anyio-4.12.1, langsmith-0.7.14
+collecting ... collected 7 items
+
+scripts/test_economic_tracker.py::test_basic_tracking PASSED             [ 14%]
+scripts/test_economic_tracker.py::test_evaluation_threshold PASSED       [ 28%]
+scripts/test_economic_tracker.py::test_date_and_task_indexing PASSED     [ 42%]
+scripts/test_economic_tracker.py::test_analytics PASSED                  [ 57%]
+scripts/test_economic_tracker.py::test_token_costs_file_format PASSED    [ 71%]
+scripts/test_economic_tracker.py::test_payment_threshold_edge_cases PASSED [ 85%]
+scripts/test_economic_tracker.py::test_daily_state_tracking PASSED       [100%]
+
+============================== 7 passed in 0.02s ===============================

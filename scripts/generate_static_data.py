@@ -4,13 +4,14 @@ Generate static JSON data files for GitHub Pages deployment.
 Replicates the FastAPI server.py endpoints as static files under frontend/public/data/.
 Run from the repo root before `npm run build`.
 """
+
 import json
 import shutil
 from pathlib import Path
 
-REPO_ROOT        = Path(__file__).parent.parent
-DATA_PATH        = REPO_ROOT / "livebench" / "data" / "agent_data"
-OUT_PATH         = REPO_ROOT / "frontend" / "public" / "data"
+REPO_ROOT = Path(__file__).parent.parent
+DATA_PATH = REPO_ROOT / "livebench" / "data" / "agent_data"
+OUT_PATH = REPO_ROOT / "frontend" / "public" / "data"
 TASK_VALUES_PATH = REPO_ROOT / "scripts" / "task_value_estimates" / "task_values.jsonl"
 
 
@@ -96,15 +97,17 @@ def gen_agents():
         latest = balance_history[-1]
         decisions = read_jsonl(agent_dir / "decisions" / "decisions.jsonl")
         last_decision = decisions[-1] if decisions else {}
-        agents.append({
-            "signature": sig,
-            "balance": latest.get("balance", 0),
-            "net_worth": latest.get("net_worth", 0),
-            "survival_status": latest.get("survival_status", "unknown"),
-            "current_activity": last_decision.get("activity"),
-            "current_date": last_decision.get("date"),
-            "total_token_cost": latest.get("total_token_cost", 0),
-        })
+        agents.append(
+            {
+                "signature": sig,
+                "balance": latest.get("balance", 0),
+                "net_worth": latest.get("net_worth", 0),
+                "survival_status": latest.get("survival_status", "unknown"),
+                "current_activity": last_decision.get("activity"),
+                "current_date": last_decision.get("date"),
+                "total_token_cost": latest.get("total_token_cost", 0),
+            }
+        )
     write_json(OUT_PATH / "agents.json", {"agents": agents})
 
 
@@ -119,15 +122,23 @@ def gen_leaderboard():
         latest = balance_history[-1]
         initial_balance = balance_history[0].get("balance", 0)
         current_balance = latest.get("balance", 0)
-        pct_change = ((current_balance - initial_balance) / initial_balance * 100) if initial_balance else 0
+        pct_change = (
+            ((current_balance - initial_balance) / initial_balance * 100)
+            if initial_balance
+            else 0
+        )
 
         evals = read_jsonl(agent_dir / "work" / "evaluations.jsonl")
-        scores = [e.get("evaluation_score") for e in evals if e.get("evaluation_score") is not None]
+        scores = [
+            e.get("evaluation_score")
+            for e in evals
+            if e.get("evaluation_score") is not None
+        ]
         avg_score = (sum(scores) / len(scores)) if scores else None
 
         # Authoritative sources from task_completions.jsonl
         tc_by_task_id = load_task_completions_by_task_id(agent_dir)
-        tc_by_date    = load_task_completions_by_date(agent_dir)
+        tc_by_date = load_task_completions_by_date(agent_dir)
 
         stripped_history = [
             {
@@ -157,27 +168,33 @@ def gen_leaderboard():
             wcs = tc.get("wall_clock_seconds")
             if wcs is None:
                 continue
-            wc_series.append({
-                "wall_clock_seconds": wcs,
-                "balance": balance_by_task_id.get(tid, current_balance),
-                "date": tc.get("date"),
-                "timestamp": tc.get("timestamp"),
-            })
+            wc_series.append(
+                {
+                    "wall_clock_seconds": wcs,
+                    "balance": balance_by_task_id.get(tid, current_balance),
+                    "date": tc.get("date"),
+                    "timestamp": tc.get("timestamp"),
+                }
+            )
 
-        agents.append({
-            "signature": sig,
-            "initial_balance": initial_balance,
-            "current_balance": current_balance,
-            "pct_change": round(pct_change, 1),
-            "total_token_cost": latest.get("total_token_cost", 0),
-            "total_work_income": latest.get("total_work_income", 0),
-            "net_worth": latest.get("net_worth", 0),
-            "survival_status": latest.get("survival_status", "unknown"),
-            "num_tasks": len(tc_by_task_id),  # authoritative count from task_completions.jsonl
-            "avg_eval_score": avg_score,
-            "balance_history": stripped_history,
-            "wc_series": wc_series,
-        })
+        agents.append(
+            {
+                "signature": sig,
+                "initial_balance": initial_balance,
+                "current_balance": current_balance,
+                "pct_change": round(pct_change, 1),
+                "total_token_cost": latest.get("total_token_cost", 0),
+                "total_work_income": latest.get("total_work_income", 0),
+                "net_worth": latest.get("net_worth", 0),
+                "survival_status": latest.get("survival_status", "unknown"),
+                "num_tasks": len(
+                    tc_by_task_id
+                ),  # authoritative count from task_completions.jsonl
+                "avg_eval_score": avg_score,
+                "balance_history": stripped_history,
+                "wc_series": wc_series,
+            }
+        )
 
     agents.sort(key=lambda a: a["current_balance"], reverse=True)
     write_json(OUT_PATH / "leaderboard.json", {"agents": agents})
@@ -187,33 +204,37 @@ def gen_leaderboard():
 def gen_agent_detail(agent_dir: Path):
     sig = agent_dir.name
     balance_history = read_jsonl(agent_dir / "economic" / "balance.jsonl")
-    decisions       = read_jsonl(agent_dir / "decisions" / "decisions.jsonl")
-    evals           = read_jsonl(agent_dir / "work" / "evaluations.jsonl")
+    decisions = read_jsonl(agent_dir / "decisions" / "decisions.jsonl")
+    evals = read_jsonl(agent_dir / "work" / "evaluations.jsonl")
 
-    scores = [e.get("evaluation_score") for e in evals if e.get("evaluation_score") is not None]
+    scores = [
+        e.get("evaluation_score")
+        for e in evals
+        if e.get("evaluation_score") is not None
+    ]
     avg_score = (sum(scores) / len(scores)) if scores else None
 
     # Authoritative task count from task_completions.jsonl
     num_tasks = len(load_task_completions_by_task_id(agent_dir))
 
-    latest         = balance_history[-1]  if balance_history else {}
-    last_decision  = decisions[-1]        if decisions        else {}
+    latest = balance_history[-1] if balance_history else {}
+    last_decision = decisions[-1] if decisions else {}
 
     data = {
         "signature": sig,
         "current_status": {
-            "balance":            latest.get("balance", 0),
-            "net_worth":          latest.get("net_worth", 0),
-            "survival_status":    latest.get("survival_status", "unknown"),
-            "total_token_cost":   latest.get("total_token_cost", 0),
-            "total_work_income":  latest.get("total_work_income", 0),
-            "current_activity":   last_decision.get("activity"),
-            "current_date":       last_decision.get("date"),
+            "balance": latest.get("balance", 0),
+            "net_worth": latest.get("net_worth", 0),
+            "survival_status": latest.get("survival_status", "unknown"),
+            "total_token_cost": latest.get("total_token_cost", 0),
+            "total_work_income": latest.get("total_work_income", 0),
+            "current_activity": last_decision.get("activity"),
+            "current_date": last_decision.get("date"),
             "avg_evaluation_score": avg_score,
-            "num_evaluations":    num_tasks,  # authoritative count from task_completions.jsonl
+            "num_evaluations": num_tasks,  # authoritative count from task_completions.jsonl
         },
         "balance_history": balance_history,
-        "decisions":       decisions,
+        "decisions": decisions,
         "evaluation_scores": scores,
     }
     write_json(OUT_PATH / "agents" / f"{sig}.json", data)
@@ -258,16 +279,16 @@ def gen_agent_tasks(agent_dir: Path):
 
         if tid in evals:
             ev = evals[tid]
-            task["evaluation"]        = ev
-            task["completed"]         = True
-            task["payment"]           = ev.get("payment", 0)
-            task["feedback"]          = ev.get("feedback", "")
-            task["evaluation_score"]  = ev.get("evaluation_score")
+            task["evaluation"] = ev
+            task["completed"] = True
+            task["payment"] = ev.get("payment", 0)
+            task["feedback"] = ev.get("feedback", "")
+            task["evaluation_score"] = ev.get("evaluation_score")
             task["evaluation_method"] = ev.get("evaluation_method", "heuristic")
         else:
-            task["completed"]         = bool(completion.get("work_submitted", False))
-            task["payment"]           = completion.get("money_earned", 0)
-            task["evaluation_score"]  = completion.get("evaluation_score")
+            task["completed"] = bool(completion.get("work_submitted", False))
+            task["payment"] = completion.get("money_earned", 0)
+            task["evaluation_score"] = completion.get("evaluation_score")
             task["evaluation_method"] = "heuristic"
 
         tasks.append(task)
@@ -280,45 +301,55 @@ def gen_agent_tasks(agent_dir: Path):
     assigned_ids = {t["task_id"] for t in tasks}
     for tid, meta in TASK_POOL.items():
         if tid not in assigned_ids:
-            tasks.append({
-                "task_id": tid,
-                "occupation": meta["occupation"],
-                "sector": meta["sector"],
-                "task_value_usd": meta["task_value_usd"],
-                "completed": False,
-                "payment": 0,
-                "evaluation_score": None,
-            })
+            tasks.append(
+                {
+                    "task_id": tid,
+                    "occupation": meta["occupation"],
+                    "sector": meta["sector"],
+                    "task_value_usd": meta["task_value_usd"],
+                    "completed": False,
+                    "payment": 0,
+                    "evaluation_score": None,
+                }
+            )
 
-    write_json(OUT_PATH / "agents" / sig / "tasks.json", {"tasks": tasks, "pool_size": pool_size})
+    write_json(
+        OUT_PATH / "agents" / sig / "tasks.json",
+        {"tasks": tasks, "pool_size": pool_size},
+    )
 
 
 # ── /data/agents/{sig}/learning.json ────────────────────────────────────────
 def gen_agent_learning(agent_dir: Path):
-    sig     = agent_dir.name
+    sig = agent_dir.name
     entries = []
-    mem     = agent_dir / "memory" / "memory.jsonl"
+    mem = agent_dir / "memory" / "memory.jsonl"
     if mem.exists():
         for raw in read_jsonl(mem):
-            entries.append({
-                "topic":     raw.get("topic", "Unknown"),
-                "timestamp": raw.get("timestamp", ""),
-                "date":      raw.get("date", ""),
-                "content":   raw.get("knowledge", ""),
-            })
+            entries.append(
+                {
+                    "topic": raw.get("topic", "Unknown"),
+                    "timestamp": raw.get("timestamp", ""),
+                    "date": raw.get("date", ""),
+                    "content": raw.get("knowledge", ""),
+                }
+            )
     memory_content = "\n\n".join(
         f"## {e['topic']} ({e['date']})\n{e['content']}" for e in entries
     )
-    write_json(OUT_PATH / "agents" / sig / "learning.json", {
-        "memory":  memory_content,
-        "entries": entries,
-    })
+    write_json(
+        OUT_PATH / "agents" / sig / "learning.json",
+        {
+            "memory": memory_content,
+            "entries": entries,
+        },
+    )
 
 
 # ── /data/agents/{sig}/economic.json ────────────────────────────────────────
 def gen_agent_economic(agent_dir: Path):
-    sig     = agent_dir.name
-    rows    = read_jsonl(agent_dir / "economic" / "balance.jsonl")
+    sig = agent_dir.name
+    rows = read_jsonl(agent_dir / "economic" / "balance.jsonl")
     dates, balances, costs, income = [], [], [], []
     for row in rows:
         dates.append(row.get("date", ""))
@@ -326,22 +357,26 @@ def gen_agent_economic(agent_dir: Path):
         costs.append(row.get("daily_token_cost", 0))
         income.append(row.get("work_income_delta", 0))
     latest = rows[-1] if rows else {}
-    write_json(OUT_PATH / "agents" / sig / "economic.json", {
-        "balance":           latest.get("balance", 0),
-        "total_token_cost":  latest.get("total_token_cost", 0),
-        "total_work_income": latest.get("total_work_income", 0),
-        "net_worth":         latest.get("net_worth", 0),
-        "survival_status":   latest.get("survival_status", "unknown"),
-        "dates":             dates,
-        "balance_history":   balances,
-        "token_costs":       costs,
-        "work_income":       income,
-    })
+    write_json(
+        OUT_PATH / "agents" / sig / "economic.json",
+        {
+            "balance": latest.get("balance", 0),
+            "total_token_cost": latest.get("total_token_cost", 0),
+            "total_work_income": latest.get("total_work_income", 0),
+            "net_worth": latest.get("net_worth", 0),
+            "survival_status": latest.get("survival_status", "unknown"),
+            "dates": dates,
+            "balance_history": balances,
+            "token_costs": costs,
+            "work_income": income,
+        },
+    )
 
 
 # ── /data/artifacts.json + /data/files/{path} ───────────────────────────────
-ARTIFACT_EXTENSIONS = {'.pdf', '.docx', '.xlsx', '.pptx'}
-SKIP_DIRS = {'code_exec', 'videos', 'reference_files'}
+ARTIFACT_EXTENSIONS = {".pdf", ".docx", ".xlsx", ".pptx"}
+SKIP_DIRS = {"code_exec", "videos", "reference_files"}
+
 
 def gen_artifacts():
     artifacts = []
@@ -364,15 +399,19 @@ def gen_artifacts():
                 if file_path.suffix.lower() not in ARTIFACT_EXTENSIONS:
                     continue
 
-                rel_path = str(file_path.relative_to(DATA_PATH))  # e.g. sig/sandbox/date/file.pdf
-                artifacts.append({
-                    "agent":      sig,
-                    "date":       date_dir.name,
-                    "filename":   file_path.name,
-                    "extension":  file_path.suffix.lower(),
-                    "size_bytes": file_path.stat().st_size,
-                    "path":       rel_path,
-                })
+                rel_path = str(
+                    file_path.relative_to(DATA_PATH)
+                )  # e.g. sig/sandbox/date/file.pdf
+                artifacts.append(
+                    {
+                        "agent": sig,
+                        "date": date_dir.name,
+                        "filename": file_path.name,
+                        "extension": file_path.suffix.lower(),
+                        "size_bytes": file_path.stat().st_size,
+                        "path": rel_path,
+                    }
+                )
 
                 # Copy the actual file so it can be served statically
                 dest = files_root / rel_path

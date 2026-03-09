@@ -35,12 +35,12 @@ def load_task_values(task_values_path: str) -> Dict[str, float]:
     if not os.path.exists(task_values_path):
         raise FileNotFoundError(f"Task values file not found: {task_values_path}")
 
-    with open(task_values_path, 'r') as f:
+    with open(task_values_path, "r") as f:
         for line in f:
             try:
                 entry = json.loads(line.strip())
-                task_id = entry.get('task_id')
-                task_value = entry.get('task_value_usd')
+                task_id = entry.get("task_id")
+                task_value = entry.get("task_value_usd")
                 if task_id and task_value is not None:
                     task_values[task_id] = float(task_value)
             except json.JSONDecodeError:
@@ -48,7 +48,9 @@ def load_task_values(task_values_path: str) -> Dict[str, float]:
 
     log_message(f"Loaded {len(task_values)} task values")
     values = list(task_values.values())
-    log_message(f"Price range: ${min(values):.2f} - ${max(values):.2f}, avg: ${sum(values)/len(values):.2f}")
+    log_message(
+        f"Price range: ${min(values):.2f} - ${max(values):.2f}, avg: ${sum(values)/len(values):.2f}"
+    )
     return task_values
 
 
@@ -60,7 +62,7 @@ def load_tasks(agent_dir: Path) -> List[Dict[str, Any]]:
         raise FileNotFoundError(f"Tasks file not found: {tasks_file}")
 
     tasks = []
-    with open(tasks_file, 'r') as f:
+    with open(tasks_file, "r") as f:
         for line in f:
             try:
                 tasks.append(json.loads(line.strip()))
@@ -79,7 +81,7 @@ def load_balance_history(agent_dir: Path) -> List[Dict[str, Any]]:
         raise FileNotFoundError(f"Balance file not found: {balance_file}")
 
     balance_history = []
-    with open(balance_file, 'r') as f:
+    with open(balance_file, "r") as f:
         for line in f:
             try:
                 balance_history.append(json.loads(line.strip()))
@@ -95,8 +97,8 @@ def create_date_to_task_mapping(tasks: List[Dict[str, Any]]) -> Dict[str, str]:
     date_to_task = {}
 
     for task in tasks:
-        date = task.get('date')
-        task_id = task.get('task_id')
+        date = task.get("date")
+        task_id = task.get("task_id")
 
         if date and task_id:
             date_to_task[date] = task_id
@@ -109,7 +111,7 @@ def recalculate_balance_history(
     balance_history: List[Dict[str, Any]],
     date_to_task: Dict[str, str],
     task_values: Dict[str, float],
-    default_max_payment: float = 50.0
+    default_max_payment: float = 50.0,
 ) -> tuple[List[Dict[str, Any]], Dict[str, Dict[str, float]]]:
     """
     Recalculate balance history by scaling actual payments
@@ -127,24 +129,24 @@ def recalculate_balance_history(
         return [], {}
 
     # Initialize tracking variables
-    current_balance = balance_history[0].get('balance', 0.0)
+    current_balance = balance_history[0].get("balance", 0.0)
     cumulative_income = 0.0
     cumulative_costs = 0.0
 
     # Process first entry (initialization)
     first_entry = balance_history[0].copy()
-    if first_entry.get('date') == 'initialization':
+    if first_entry.get("date") == "initialization":
         new_balance_history.append(first_entry)
-        current_balance = first_entry['balance']
+        current_balance = first_entry["balance"]
 
     # Process remaining entries
     for entry in balance_history:
-        if entry.get('date') == 'initialization':
+        if entry.get("date") == "initialization":
             continue
 
-        date = entry['date']
-        old_work_income = entry.get('work_income_delta', 0.0)
-        token_costs = entry.get('token_cost_delta', 0.0)
+        date = entry["date"]
+        old_work_income = entry.get("work_income_delta", 0.0)
+        token_costs = entry.get("token_cost_delta", 0.0)
 
         # Find task and real value for this date
         new_work_income = old_work_income
@@ -165,12 +167,12 @@ def recalculate_balance_history(
 
                 # Track correction
                 payment_corrections[task_id] = {
-                    'date': date,
-                    'old_payment': old_work_income,
-                    'new_payment': new_work_income,
-                    'old_max_payment': default_max_payment,
-                    'real_task_value': real_task_value,
-                    'scaling_factor': scaling_factor
+                    "date": date,
+                    "old_payment": old_work_income,
+                    "new_payment": new_work_income,
+                    "old_max_payment": default_max_payment,
+                    "real_task_value": real_task_value,
+                    "scaling_factor": scaling_factor,
                 }
 
         # Update cumulative totals
@@ -183,16 +185,16 @@ def recalculate_balance_history(
 
         # Create corrected entry
         new_entry = entry.copy()
-        new_entry['work_income_delta'] = new_work_income
-        new_entry['work_income_delta_old'] = old_work_income
-        new_entry['total_work_income'] = cumulative_income
-        new_entry['total_token_cost'] = cumulative_costs
-        new_entry['balance'] = current_balance
-        new_entry['net_worth'] = current_balance
-        new_entry['correction_applied'] = correction_applied
+        new_entry["work_income_delta"] = new_work_income
+        new_entry["work_income_delta_old"] = old_work_income
+        new_entry["total_work_income"] = cumulative_income
+        new_entry["total_token_cost"] = cumulative_costs
+        new_entry["balance"] = current_balance
+        new_entry["net_worth"] = current_balance
+        new_entry["correction_applied"] = correction_applied
         if task_id:
-            new_entry['task_id'] = task_id
-            new_entry['real_task_value'] = real_task_value
+            new_entry["task_id"] = task_id
+            new_entry["real_task_value"] = real_task_value
 
         new_balance_history.append(new_entry)
 
@@ -202,7 +204,7 @@ def recalculate_balance_history(
 def save_corrected_data(
     agent_dir: Path,
     new_balance_history: List[Dict[str, Any]],
-    payment_corrections: Dict[str, Dict[str, float]]
+    payment_corrections: Dict[str, Dict[str, float]],
 ):
     """Save corrected data to new economic_real_value directory"""
 
@@ -212,9 +214,9 @@ def save_corrected_data(
 
     # Save corrected balance history
     balance_file = output_dir / "balance.jsonl"
-    with open(balance_file, 'w') as f:
+    with open(balance_file, "w") as f:
         for entry in new_balance_history:
-            f.write(json.dumps(entry) + '\n')
+            f.write(json.dumps(entry) + "\n")
     log_message(f"Saved corrected balance history: {balance_file}")
 
     # Generate and save summary
@@ -224,29 +226,34 @@ def save_corrected_data(
 
         # Calculate old final balance
         old_cumulative_income = sum(
-            e.get('work_income_delta_old', 0)
-            for e in new_balance_history if e.get('date') != 'initialization'
+            e.get("work_income_delta_old", 0)
+            for e in new_balance_history
+            if e.get("date") != "initialization"
         )
         old_cumulative_costs = sum(
-            e.get('token_cost_delta', 0)
-            for e in new_balance_history if e.get('date') != 'initialization'
+            e.get("token_cost_delta", 0)
+            for e in new_balance_history
+            if e.get("date") != "initialization"
         )
-        old_final_balance = init_entry.get('balance', 0) + old_cumulative_income - old_cumulative_costs
+        old_final_balance = (
+            init_entry.get("balance", 0) + old_cumulative_income - old_cumulative_costs
+        )
 
         summary = {
-            'correction_date': datetime.now().isoformat(),
-            'total_tasks_corrected': len(payment_corrections),
-            'final_balance_old': old_final_balance,
-            'final_balance_new': final_entry.get('balance', 0.0),
-            'balance_change': final_entry.get('balance', 0.0) - old_final_balance,
-            'total_work_income_old': old_cumulative_income,
-            'total_work_income_new': final_entry.get('total_work_income', 0.0),
-            'income_change': final_entry.get('total_work_income', 0.0) - old_cumulative_income,
-            'payment_corrections': payment_corrections
+            "correction_date": datetime.now().isoformat(),
+            "total_tasks_corrected": len(payment_corrections),
+            "final_balance_old": old_final_balance,
+            "final_balance_new": final_entry.get("balance", 0.0),
+            "balance_change": final_entry.get("balance", 0.0) - old_final_balance,
+            "total_work_income_old": old_cumulative_income,
+            "total_work_income_new": final_entry.get("total_work_income", 0.0),
+            "income_change": final_entry.get("total_work_income", 0.0)
+            - old_cumulative_income,
+            "payment_corrections": payment_corrections,
         }
 
         summary_file = output_dir / "correction_summary.json"
-        with open(summary_file, 'w') as f:
+        with open(summary_file, "w") as f:
             json.dump(summary, f, indent=2)
         log_message(f"Saved correction summary: {summary_file}")
 
@@ -260,28 +267,36 @@ def save_corrected_data(
 def print_summary(
     payment_corrections: Dict[str, Dict[str, float]],
     original_balance: List[Dict[str, Any]],
-    new_balance: List[Dict[str, Any]]
+    new_balance: List[Dict[str, Any]],
 ):
     """Print summary of corrections"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CORRECTION SUMMARY")
-    print("="*70)
+    print("=" * 70)
 
     if not payment_corrections:
         print("\n⚠️  No corrections applied (no matching tasks with payments)")
         return
 
-    total_old = sum(c['old_payment'] for c in payment_corrections.values())
-    total_new = sum(c['new_payment'] for c in payment_corrections.values())
+    total_old = sum(c["old_payment"] for c in payment_corrections.values())
+    total_new = sum(c["new_payment"] for c in payment_corrections.values())
     difference = total_new - total_old
 
     # Calculate final balances
-    init_balance = original_balance[0].get('balance', 0) if original_balance else 0
-    old_income = sum(e.get('work_income_delta', 0) for e in original_balance if e.get('date') != 'initialization')
-    old_costs = sum(e.get('token_cost_delta', 0) for e in original_balance if e.get('date') != 'initialization')
+    init_balance = original_balance[0].get("balance", 0) if original_balance else 0
+    old_income = sum(
+        e.get("work_income_delta", 0)
+        for e in original_balance
+        if e.get("date") != "initialization"
+    )
+    old_costs = sum(
+        e.get("token_cost_delta", 0)
+        for e in original_balance
+        if e.get("date") != "initialization"
+    )
     old_final = init_balance + old_income - old_costs
 
-    new_final = new_balance[-1].get('balance', 0) if new_balance else 0
+    new_final = new_balance[-1].get("balance", 0) if new_balance else 0
 
     print(f"\n📊 Payment Corrections:")
     print(f"   Total tasks corrected: {len(payment_corrections)}")
@@ -297,24 +312,33 @@ def print_summary(
     print(f"\n📈 Top 10 Largest Corrections:")
     sorted_corrections = sorted(
         payment_corrections.items(),
-        key=lambda x: abs(x[1]['new_payment'] - x[1]['old_payment']),
-        reverse=True
+        key=lambda x: abs(x[1]["new_payment"] - x[1]["old_payment"]),
+        reverse=True,
     )
     for i, (task_id, correction) in enumerate(sorted_corrections[:10], 1):
-        diff = correction['new_payment'] - correction['old_payment']
+        diff = correction["new_payment"] - correction["old_payment"]
         print(f"   {i:2d}. {correction['date']} | Task {task_id[:8]}...")
-        print(f"       Old: ${correction['old_payment']:.2f} → New: ${correction['new_payment']:.2f} (${diff:+.2f})")
-        print(f"       Real value: ${correction['real_task_value']:.2f} (scale: {correction['scaling_factor']:.2f}×)")
+        print(
+            f"       Old: ${correction['old_payment']:.2f} → New: ${correction['new_payment']:.2f} (${diff:+.2f})"
+        )
+        print(
+            f"       Real value: ${correction['real_task_value']:.2f} (scale: {correction['scaling_factor']:.2f}×)"
+        )
 
     # Show zero-payment tasks (below 0.6 cliff)
-    zero_payment_count = sum(1 for e in original_balance
-                             if e.get('date') != 'initialization'
-                             and e.get('date') in [c['date'] for c in payment_corrections.values()]
-                             and e.get('work_income_delta', 0) == 0)
+    zero_payment_count = sum(
+        1
+        for e in original_balance
+        if e.get("date") != "initialization"
+        and e.get("date") in [c["date"] for c in payment_corrections.values()]
+        and e.get("work_income_delta", 0) == 0
+    )
     if zero_payment_count > 0:
-        print(f"\n⚠️  Note: {zero_payment_count} tasks had $0 payment (below 0.6 evaluation cliff)")
+        print(
+            f"\n⚠️  Note: {zero_payment_count} tasks had $0 payment (below 0.6 evaluation cliff)"
+        )
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
 
 
 def main():
@@ -322,7 +346,9 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python recalculate_agent_economics.py <agent_data_dir>")
         print("\nExample:")
-        print("  python recalculate_agent_economics.py livebench/data/agent_data/GLM-4.7-test-openrouter-10dollar-1")
+        print(
+            "  python recalculate_agent_economics.py livebench/data/agent_data/GLM-4.7-test-openrouter-10dollar-1"
+        )
         sys.exit(1)
 
     agent_dir_path = sys.argv[1]
@@ -332,9 +358,9 @@ def main():
         print(f"❌ Error: Agent directory not found: {agent_dir}")
         sys.exit(1)
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("RECALCULATE AGENT ECONOMICS WITH REAL TASK VALUES")
-    print("="*70)
+    print("=" * 70)
     print(f"\nAgent directory: {agent_dir}")
     print(f"Output directory: {agent_dir / 'economic_real_value'}")
 
@@ -375,6 +401,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

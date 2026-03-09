@@ -19,7 +19,9 @@ from collections import defaultdict
 QUALITY_CLIFF = 0.6
 
 DATA_PATH = Path("/root/ClawWork-v1/livebench/data/agent_data")
-TASK_VALUES_PATH = Path("/root/ClawWork-v1/scripts/task_value_estimates/task_values.jsonl")
+TASK_VALUES_PATH = Path(
+    "/root/ClawWork-v1/scripts/task_value_estimates/task_values.jsonl"
+)
 
 AGENTS = [
     "Claude Sonnet 4.6",
@@ -127,15 +129,17 @@ def build_agent_tasks(agent_dir, task_values, task_pool):
     assigned_ids = {t["task_id"] for t in tasks}
     for tid, meta in task_pool.items():
         if tid not in assigned_ids:
-            tasks.append({
-                "task_id": tid,
-                "occupation": meta["occupation"],
-                "sector": meta["sector"],
-                "task_value_usd": meta["task_value_usd"],
-                "completed": False,
-                "payment": 0,
-                "evaluation_score": None,
-            })
+            tasks.append(
+                {
+                    "task_id": tid,
+                    "occupation": meta["occupation"],
+                    "sector": meta["sector"],
+                    "task_value_usd": meta["task_value_usd"],
+                    "completed": False,
+                    "payment": 0,
+                    "evaluation_score": None,
+                }
+            )
 
     return tasks
 
@@ -148,26 +152,33 @@ def compute_domain_earnings(tasks):
     for t in tasks:
         domain = t.get("occupation") or t.get("sector") or "Unknown"
         if domain not in by_domain:
-            by_domain[domain] = {"earned": 0.0, "failed": 0.0, "untapped": 0.0, "totalTasks": 0}
+            by_domain[domain] = {
+                "earned": 0.0,
+                "failed": 0.0,
+                "untapped": 0.0,
+                "totalTasks": 0,
+            }
         by_domain[domain]["totalTasks"] += 1
         score = t.get("evaluation_score")
         if t.get("completed"):
             if score is None or score >= QUALITY_CLIFF:
-                by_domain[domain]["earned"] += (t.get("payment") or 0)
+                by_domain[domain]["earned"] += t.get("payment") or 0
             else:
-                by_domain[domain]["failed"] += (t.get("task_value_usd") or 0)
+                by_domain[domain]["failed"] += t.get("task_value_usd") or 0
         else:
-            by_domain[domain]["untapped"] += (t.get("task_value_usd") or 0)
+            by_domain[domain]["untapped"] += t.get("task_value_usd") or 0
 
     result = []
     for domain, v in by_domain.items():
-        result.append({
-            "domain": domain,
-            "earned": round(v["earned"], 2),
-            "failed": round(v["failed"], 2),
-            "untapped": round(v["untapped"], 2),
-            "totalTasks": v["totalTasks"],
-        })
+        result.append(
+            {
+                "domain": domain,
+                "earned": round(v["earned"], 2),
+                "failed": round(v["failed"], 2),
+                "untapped": round(v["untapped"], 2),
+                "totalTasks": v["totalTasks"],
+            }
+        )
     result.sort(key=lambda x: x["earned"], reverse=True)
     return result
 
@@ -179,7 +190,9 @@ def print_agent_table(agent_name, domain_data):
         return
 
     # Header
-    print(f"  {'Domain':<50} {'Earned':>10} {'Failed':>10} {'Untapped':>10} {'Tasks':>6}")
+    print(
+        f"  {'Domain':<50} {'Earned':>10} {'Failed':>10} {'Untapped':>10} {'Tasks':>6}"
+    )
     print(f"  {'-'*50} {'-'*10} {'-'*10} {'-'*10} {'-'*6}")
 
     total_earned = 0
@@ -189,14 +202,18 @@ def print_agent_table(agent_name, domain_data):
 
     for d in domain_data:
         name = d["domain"][:49]
-        print(f"  {name:<50} ${d['earned']:>9.2f} ${d['failed']:>9.2f} ${d['untapped']:>9.2f} {d['totalTasks']:>6}")
+        print(
+            f"  {name:<50} ${d['earned']:>9.2f} ${d['failed']:>9.2f} ${d['untapped']:>9.2f} {d['totalTasks']:>6}"
+        )
         total_earned += d["earned"]
         total_failed += d["failed"]
         total_untapped += d["untapped"]
         total_tasks += d["totalTasks"]
 
     print(f"  {'-'*50} {'-'*10} {'-'*10} {'-'*10} {'-'*6}")
-    print(f"  {'TOTAL':<50} ${total_earned:>9.2f} ${total_failed:>9.2f} ${total_untapped:>9.2f} {total_tasks:>6}")
+    print(
+        f"  {'TOTAL':<50} ${total_earned:>9.2f} ${total_failed:>9.2f} ${total_untapped:>9.2f} {total_tasks:>6}"
+    )
     print()
 
 
@@ -234,7 +251,9 @@ def main():
         total_earned = sum(d["earned"] for d in domain_data)
         total_failed = sum(d["failed"] for d in domain_data)
         total_untapped = sum(d["untapped"] for d in domain_data)
-        print(f"  Total Earned: ${total_earned:.2f}  |  Total Failed: ${total_failed:.2f}  |  Total Untapped: ${total_untapped:.2f}")
+        print(
+            f"  Total Earned: ${total_earned:.2f}  |  Total Failed: ${total_failed:.2f}  |  Total Untapped: ${total_untapped:.2f}"
+        )
         print()
         print_agent_table(agent_name, domain_data)
 
@@ -277,7 +296,8 @@ def main():
         agents_with_data = cross_agent.get(domain, {})
         # Skip domains where every agent has 0 earned, 0 failed (all untapped)
         has_activity = any(
-            agents_with_data.get(a, {}).get("earned", 0) > 0 or agents_with_data.get(a, {}).get("failed", 0) > 0
+            agents_with_data.get(a, {}).get("earned", 0) > 0
+            or agents_with_data.get(a, {}).get("failed", 0) > 0
             for a in active_agents
         )
 
@@ -288,10 +308,14 @@ def main():
 
         for agent_name in active_agents:
             short = short_names.get(agent_name, agent_name[:12])
-            d = agents_with_data.get(agent_name, {"earned": 0, "failed": 0, "untapped": 0, "totalTasks": 0})
+            d = agents_with_data.get(
+                agent_name, {"earned": 0, "failed": 0, "untapped": 0, "totalTasks": 0}
+            )
             total_value = d["earned"] + d["failed"] + d["untapped"]
             earn_pct = (d["earned"] / total_value * 100) if total_value > 0 else 0
-            print(f"    {short:<12} ${d['earned']:>9.2f} ${d['failed']:>9.2f} ${d['untapped']:>9.2f} {d['totalTasks']:>6} {earn_pct:>6.1f}%")
+            print(
+                f"    {short:<12} ${d['earned']:>9.2f} ${d['failed']:>9.2f} ${d['untapped']:>9.2f} {d['totalTasks']:>6} {earn_pct:>6.1f}%"
+            )
         print()
 
     # ================================================================
@@ -307,25 +331,37 @@ def main():
         total_earned = sum(d["earned"] for d in domain_data)
         total_failed = sum(d["failed"] for d in domain_data)
         total_untapped = sum(d["untapped"] for d in domain_data)
-        completed_count = sum(d["totalTasks"] for d in domain_data if d["earned"] > 0 or d["failed"] > 0)
+        completed_count = sum(
+            d["totalTasks"] for d in domain_data if d["earned"] > 0 or d["failed"] > 0
+        )
         # Count tasks where agent actually did something (completed)
         completed_tasks = 0
         for d in domain_data:
             agents_d = cross_agent.get(d["domain"], {}).get(agent_name, {})
-        agent_totals.append({
-            "agent": agent_name,
-            "short": short_names.get(agent_name, agent_name[:12]),
-            "earned": total_earned,
-            "failed": total_failed,
-            "untapped": total_untapped,
-            "earn_rate": total_earned / (total_earned + total_failed) * 100 if (total_earned + total_failed) > 0 else 0,
-        })
+        agent_totals.append(
+            {
+                "agent": agent_name,
+                "short": short_names.get(agent_name, agent_name[:12]),
+                "earned": total_earned,
+                "failed": total_failed,
+                "untapped": total_untapped,
+                "earn_rate": (
+                    total_earned / (total_earned + total_failed) * 100
+                    if (total_earned + total_failed) > 0
+                    else 0
+                ),
+            }
+        )
 
     agent_totals.sort(key=lambda x: x["earned"], reverse=True)
-    print(f"  {'Rank':<5} {'Agent':<45} {'Earned':>10} {'Failed':>10} {'Untapped':>10} {'Earn Rate':>10}")
+    print(
+        f"  {'Rank':<5} {'Agent':<45} {'Earned':>10} {'Failed':>10} {'Untapped':>10} {'Earn Rate':>10}"
+    )
     print(f"  {'-'*5} {'-'*45} {'-'*10} {'-'*10} {'-'*10} {'-'*10}")
     for i, a in enumerate(agent_totals, 1):
-        print(f"  {i:<5} {a['agent']:<45} ${a['earned']:>9.2f} ${a['failed']:>9.2f} ${a['untapped']:>9.2f} {a['earn_rate']:>9.1f}%")
+        print(
+            f"  {i:<5} {a['agent']:<45} ${a['earned']:>9.2f} ${a['failed']:>9.2f} ${a['untapped']:>9.2f} {a['earn_rate']:>9.1f}%"
+        )
     print()
 
     # ================================================================
@@ -343,11 +379,17 @@ def main():
         # Only consider agents that actually attempted tasks in this domain
         attempted = {}
         for agent_name in active_agents:
-            d = agents_with_data.get(agent_name, {"earned": 0, "failed": 0, "untapped": 0, "totalTasks": 0})
+            d = agents_with_data.get(
+                agent_name, {"earned": 0, "failed": 0, "untapped": 0, "totalTasks": 0}
+            )
             activity = d["earned"] + d["failed"]
             if activity > 0:
                 earn_pct = d["earned"] / activity * 100
-                attempted[agent_name] = {"earned": d["earned"], "failed": d["failed"], "earn_pct": earn_pct}
+                attempted[agent_name] = {
+                    "earned": d["earned"],
+                    "failed": d["failed"],
+                    "earn_pct": earn_pct,
+                }
 
         if not attempted:
             continue
@@ -366,10 +408,16 @@ def main():
             strength = "VERY WEAK"
 
         print(f"  {domain}")
-        print(f"    Overall: {strength} (avg earn rate: {avg_earn_pct:.1f}% across {len(attempted)} agents)")
-        print(f"    Top earner: {short_names.get(max_agent[0], max_agent[0][:12])} (${max_agent[1]['earned']:.2f})")
+        print(
+            f"    Overall: {strength} (avg earn rate: {avg_earn_pct:.1f}% across {len(attempted)} agents)"
+        )
+        print(
+            f"    Top earner: {short_names.get(max_agent[0], max_agent[0][:12])} (${max_agent[1]['earned']:.2f})"
+        )
         if len(attempted) > 1:
-            print(f"    Lowest earn rate: {short_names.get(min_agent[0], min_agent[0][:12])} ({min_agent[1]['earn_pct']:.1f}%)")
+            print(
+                f"    Lowest earn rate: {short_names.get(min_agent[0], min_agent[0][:12])} ({min_agent[1]['earn_pct']:.1f}%)"
+            )
         print()
 
 

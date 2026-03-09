@@ -34,10 +34,10 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-
 # ---------------------------------------------------------------------------
 # Loaders
 # ---------------------------------------------------------------------------
+
 
 def load_jsonl(path: Path) -> List[dict]:
     """Load all records from a JSONL file; skip malformed lines."""
@@ -68,7 +68,7 @@ def load_tasks(agent_dir: Path) -> Dict[str, dict]:
     for rec in load_jsonl(path):
         tid = rec.get("task_id")
         if tid:
-            by_task[tid] = rec   # last assignment wins
+            by_task[tid] = rec  # last assignment wins
     return by_task
 
 
@@ -122,10 +122,9 @@ def load_balance(agent_dir: Path) -> Dict[str, dict]:
 # Derivation helpers
 # ---------------------------------------------------------------------------
 
+
 def compute_wall_clock(
-    task_id: str,
-    cost_rec: Optional[dict],
-    balance_rec: Optional[dict]
+    task_id: str, cost_rec: Optional[dict], balance_rec: Optional[dict]
 ) -> Optional[float]:
     """
     Compute wall-clock seconds from the best available source.
@@ -139,7 +138,7 @@ def compute_wall_clock(
     if cost_rec and cost_rec.get("timestamp_start") and cost_rec.get("timestamp_end"):
         try:
             t_start = datetime.fromisoformat(cost_rec["timestamp_start"])
-            t_end   = datetime.fromisoformat(cost_rec["timestamp_end"])
+            t_end = datetime.fromisoformat(cost_rec["timestamp_end"])
             secs = (t_end - t_start).total_seconds()
             if secs >= 0:
                 return round(secs, 2)
@@ -165,17 +164,20 @@ def derive_record(
 ) -> dict:
     """Build a single task_completions entry from all available sources."""
 
-    date = task_rec.get("date") or (
-        cost_rec.get("date") if cost_rec else None
-    ) or (
-        income_rec.get("date") if income_rec else None
-    ) or ""
+    date = (
+        task_rec.get("date")
+        or (cost_rec.get("date") if cost_rec else None)
+        or (income_rec.get("date") if income_rec else None)
+        or ""
+    )
 
     # work_submitted: True if a work_income record exists for this task
     work_submitted = income_rec is not None
 
-    evaluation_score = float(income_rec.get("evaluation_score", 0.0)) if income_rec else 0.0
-    money_earned     = float(income_rec.get("actual_payment",   0.0)) if income_rec else 0.0
+    evaluation_score = (
+        float(income_rec.get("evaluation_score", 0.0)) if income_rec else 0.0
+    )
+    money_earned = float(income_rec.get("actual_payment", 0.0)) if income_rec else 0.0
 
     wall_clock = compute_wall_clock(task_id, cost_rec, balance_rec)
 
@@ -189,21 +191,22 @@ def derive_record(
         timestamp = datetime.now().isoformat()
 
     return {
-        "task_id":          task_id,
-        "date":             date,
-        "attempt":          1,          # cannot be inferred from logs; assume first attempt
-        "work_submitted":   work_submitted,
+        "task_id": task_id,
+        "date": date,
+        "attempt": 1,  # cannot be inferred from logs; assume first attempt
+        "work_submitted": work_submitted,
         "evaluation_score": round(evaluation_score, 4),
-        "money_earned":     round(money_earned, 4),
+        "money_earned": round(money_earned, 4),
         "wall_clock_seconds": wall_clock,  # None when not derivable
-        "timestamp":        timestamp,
-        "_derived":         True,       # marker so downstream code knows this is reconstructed
+        "timestamp": timestamp,
+        "_derived": True,  # marker so downstream code knows this is reconstructed
     }
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def derive_task_completions(agent_dir: Path, dry_run: bool = False) -> List[dict]:
     """
@@ -226,7 +229,9 @@ def derive_task_completions(agent_dir: Path, dry_run: bool = False) -> List[dict
 
     print("Loading economic/token_costs.jsonl …")
     cost_records, income_records = load_token_costs(agent_dir)
-    print(f"  → {len(cost_records)} cost record(s), {len(income_records)} income record(s)")
+    print(
+        f"  → {len(cost_records)} cost record(s), {len(income_records)} income record(s)"
+    )
 
     print("Loading economic/balance.jsonl …")
     balance_records = load_balance(agent_dir)
@@ -234,13 +239,13 @@ def derive_task_completions(agent_dir: Path, dry_run: bool = False) -> List[dict
 
     # --- Derive one record per task ---
     derived: List[dict] = []
-    missing_cost  = 0
+    missing_cost = 0
     missing_income = 0
-    missing_wall  = 0
+    missing_wall = 0
 
     for task_id, task_rec in tasks.items():
-        cost_rec    = cost_records.get(task_id)
-        income_rec  = income_records.get(task_id)
+        cost_rec = cost_records.get(task_id)
+        income_rec = income_records.get(task_id)
         balance_rec = balance_records.get(task_id)
 
         # Skip tasks with no submission (no work_income record)
@@ -266,11 +271,14 @@ def derive_task_completions(agent_dir: Path, dry_run: bool = False) -> List[dict
     total_earned = sum(r["money_earned"] for r in derived)
     avg_score = (
         sum(r["evaluation_score"] for r in derived if r["work_submitted"]) / submitted
-        if submitted else 0.0
+        if submitted
+        else 0.0
     )
 
     total_tasks = len(tasks)
-    print(f"\nDerived {len(derived)} submitted record(s) out of {total_tasks} total task(s):")
+    print(
+        f"\nDerived {len(derived)} submitted record(s) out of {total_tasks} total task(s):"
+    )
     print(f"  Not submitted (skipped) : {missing_income}")
     print(f"  Total earned            : ${total_earned:.2f}")
     print(f"  Avg eval score          : {avg_score:.3f}")
@@ -280,7 +288,9 @@ def derive_task_completions(agent_dir: Path, dry_run: bool = False) -> List[dict
     # --- Write ---
     out_path = agent_dir / "economic" / "task_completions.jsonl"
     if dry_run:
-        print(f"\n[dry-run] Would write {len(derived)} submitted records to:\n  {out_path}")
+        print(
+            f"\n[dry-run] Would write {len(derived)} submitted records to:\n  {out_path}"
+        )
         print("\nFirst 3 records:")
         for r in derived[:3]:
             print(" ", json.dumps(r))
@@ -300,12 +310,12 @@ def main():
     )
     parser.add_argument(
         "agent_dir",
-        help="Path to agent data directory, e.g. livebench/data/agent_data/GLM-4.7-test-openrouter-10dollar-1"
+        help="Path to agent data directory, e.g. livebench/data/agent_data/GLM-4.7-test-openrouter-10dollar-1",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print derived records without writing the output file."
+        help="Print derived records without writing the output file.",
     )
     args = parser.parse_args()
 

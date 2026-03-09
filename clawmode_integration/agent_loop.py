@@ -10,30 +10,26 @@ ClawWorkAgentLoop — subclasses nanobot's AgentLoop to add:
 
 from __future__ import annotations
 
-import json
 import uuid
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from loguru import logger
-
 from nanobot.agent.loop import AgentLoop
 from nanobot.bus.events import InboundMessage, OutboundMessage
-from nanobot.bus.queue import MessageBus
-from nanobot.providers.base import LLMProvider
-from nanobot.session.manager import SessionManager
 
-from clawmode_integration.provider_wrapper import CostCapturingLiteLLMProvider, TrackedProvider
+from clawmode_integration.artifact_tools import CreateArtifactTool, ReadArtifactTool
+from clawmode_integration.provider_wrapper import (
+    CostCapturingLiteLLMProvider,
+    TrackedProvider,
+)
 from clawmode_integration.task_classifier import TaskClassifier
 from clawmode_integration.tools import (
     ClawWorkState,
     DecideActivityTool,
-    SubmitWorkTool,
-    LearnTool,
     GetStatusTool,
+    LearnTool,
+    SubmitWorkTool,
 )
-from clawmode_integration.artifact_tools import CreateArtifactTool, ReadArtifactTool
 
 _CLAWWORK_USAGE = (
     "Usage: `/clawwork <instruction>`\n\n"
@@ -59,6 +55,7 @@ class ClawWorkAgentLoop(AgentLoop):
         # OpenRouter's reported cost flows through to EconomicTracker.
         # Class mutation avoids recreating the provider with unknown kwargs.
         from nanobot.providers.litellm_provider import LiteLLMProvider
+
         if type(self.provider) is LiteLLMProvider:
             self.provider.__class__ = CostCapturingLiteLLMProvider
 
@@ -147,7 +144,7 @@ class ClawWorkAgentLoop(AgentLoop):
     ) -> OutboundMessage | None:
         """Parse /clawwork <instruction>, classify, assign task, run agent."""
         # Extract instruction after "/clawwork"
-        instruction = content[len("/clawwork"):].strip()
+        instruction = content[len("/clawwork") :].strip()
 
         if not instruction:
             return OutboundMessage(
@@ -219,7 +216,6 @@ class ClawWorkAgentLoop(AgentLoop):
         )
 
         # Run through the normal economic-tracked flow
-        ts = msg.timestamp.strftime("%Y%m%d_%H%M%S")
         tracker = self._lb.economic_tracker
         tracker.start_task(task_id, date=date_str)
 

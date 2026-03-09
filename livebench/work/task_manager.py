@@ -35,7 +35,7 @@ class TaskManager:
         agent_assignment: Optional[Dict[str, Any]] = None,
         # Task value pricing
         task_values_path: Optional[str] = None,
-        default_max_payment: float = 50.0
+        default_max_payment: float = 50.0,
     ):
         """
         Initialize Task Manager with flexible task loading
@@ -129,20 +129,17 @@ class TaskManager:
             raise ValueError("task_source_path required for parquet type")
 
         parquet_path = os.path.join(
-            self.task_source_path,
-            "data/train-00000-of-00001.parquet"
+            self.task_source_path, "data/train-00000-of-00001.parquet"
         )
 
         if not os.path.exists(parquet_path):
-            raise FileNotFoundError(
-                f"Parquet file not found at {parquet_path}"
-            )
+            raise FileNotFoundError(f"Parquet file not found at {parquet_path}")
 
         # Load parquet file
         self.tasks_df = pd.read_parquet(parquet_path)
 
         # Convert to list of dicts for easier access
-        self.tasks_list = self.tasks_df.to_dict('records')
+        self.tasks_list = self.tasks_df.to_dict("records")
 
         # Apply filters
         self._apply_filters()
@@ -161,13 +158,11 @@ class TaskManager:
             raise ValueError("task_source_path required for jsonl type")
 
         if not os.path.exists(self.task_source_path):
-            raise FileNotFoundError(
-                f"JSONL file not found at {self.task_source_path}"
-            )
+            raise FileNotFoundError(f"JSONL file not found at {self.task_source_path}")
 
         # Load JSONL
         self.tasks_list = []
-        with open(self.task_source_path, 'r', encoding='utf-8') as f:
+        with open(self.task_source_path, "r", encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
                 if not line:
@@ -214,18 +209,20 @@ class TaskManager:
             return
 
         try:
-            with open(self.task_values_path, 'r') as f:
+            with open(self.task_values_path, "r") as f:
                 for line in f:
                     try:
                         entry = json.loads(line.strip())
-                        task_id = entry.get('task_id')
-                        task_value = entry.get('task_value_usd')
+                        task_id = entry.get("task_id")
+                        task_value = entry.get("task_value_usd")
                         if task_id and task_value is not None:
                             self.task_values[task_id] = float(task_value)
                     except json.JSONDecodeError:
                         continue
 
-            print(f"✅ Loaded {len(self.task_values)} task values from {self.task_values_path}")
+            print(
+                f"✅ Loaded {len(self.task_values)} task values from {self.task_values_path}"
+            )
             if self.task_values:
                 values = list(self.task_values.values())
                 print(f"   Price range: ${min(values):.2f} - ${max(values):.2f}")
@@ -245,7 +242,7 @@ class TaskManager:
         Raises:
             ValueError: If task schema is invalid
         """
-        required_fields = ['task_id', 'sector', 'occupation', 'prompt']
+        required_fields = ["task_id", "sector", "occupation", "prompt"]
         missing_fields = [f for f in required_fields if f not in task]
 
         if missing_fields:
@@ -254,8 +251,8 @@ class TaskManager:
             )
 
         # Ensure reference_files exists (can be empty list)
-        if 'reference_files' not in task:
-            task['reference_files'] = []
+        if "reference_files" not in task:
+            task["reference_files"] = []
 
     def _apply_filters(self) -> None:
         """Apply agent-specific filters to task list"""
@@ -263,43 +260,45 @@ class TaskManager:
         self.filtered_tasks_list = self.tasks_list.copy()
 
         # If explicit assignment configured, filter to only those task IDs
-        if self.agent_assignment and 'task_ids' in self.agent_assignment:
-            assigned_ids = set(self.agent_assignment['task_ids'])
+        if self.agent_assignment and "task_ids" in self.agent_assignment:
+            assigned_ids = set(self.agent_assignment["task_ids"])
             self.filtered_tasks_list = [
-                t for t in self.filtered_tasks_list
-                if t['task_id'] in assigned_ids
+                t for t in self.filtered_tasks_list if t["task_id"] in assigned_ids
             ]
-            print(f"   Applied explicit assignment filter: {len(assigned_ids)} task IDs")
+            print(
+                f"   Applied explicit assignment filter: {len(assigned_ids)} task IDs"
+            )
             return  # Don't apply other filters if explicit assignment
 
         # Apply sector filter
-        if 'sectors' in self.agent_filters and self.agent_filters['sectors']:
-            allowed_sectors = set(self.agent_filters['sectors'])
+        if "sectors" in self.agent_filters and self.agent_filters["sectors"]:
+            allowed_sectors = set(self.agent_filters["sectors"])
             self.filtered_tasks_list = [
-                t for t in self.filtered_tasks_list
-                if t['sector'] in allowed_sectors
+                t for t in self.filtered_tasks_list if t["sector"] in allowed_sectors
             ]
             print(f"   Applied sector filter: {allowed_sectors}")
 
         # Apply occupation filter
-        if 'occupations' in self.agent_filters and self.agent_filters['occupations']:
-            allowed_occupations = set(self.agent_filters['occupations'])
+        if "occupations" in self.agent_filters and self.agent_filters["occupations"]:
+            allowed_occupations = set(self.agent_filters["occupations"])
             self.filtered_tasks_list = [
-                t for t in self.filtered_tasks_list
-                if t['occupation'] in allowed_occupations
+                t
+                for t in self.filtered_tasks_list
+                if t["occupation"] in allowed_occupations
             ]
             print(f"   Applied occupation filter: {allowed_occupations}")
 
         # Apply task_id filter
-        if 'task_ids' in self.agent_filters and self.agent_filters['task_ids']:
-            allowed_ids = set(self.agent_filters['task_ids'])
+        if "task_ids" in self.agent_filters and self.agent_filters["task_ids"]:
+            allowed_ids = set(self.agent_filters["task_ids"])
             self.filtered_tasks_list = [
-                t for t in self.filtered_tasks_list
-                if t['task_id'] in allowed_ids
+                t for t in self.filtered_tasks_list if t["task_id"] in allowed_ids
             ]
             print(f"   Applied task_id filter: {len(allowed_ids)} IDs")
 
-    def select_daily_task(self, date: str, signature: Optional[str] = None) -> Optional[Dict]:
+    def select_daily_task(
+        self, date: str, signature: Optional[str] = None
+    ) -> Optional[Dict]:
         """
         Select a task for the given date
 
@@ -327,8 +326,9 @@ class TaskManager:
 
         # Get available tasks (exclude already used tasks)
         available_tasks = [
-            task for task in self.filtered_tasks_list
-            if task['task_id'] not in self.used_tasks
+            task
+            for task in self.filtered_tasks_list
+            if task["task_id"] not in self.used_tasks
         ]
 
         # Check if any tasks available
@@ -339,23 +339,25 @@ class TaskManager:
             return None
 
         # Select task based on assignment mode
-        if self.agent_assignment and 'mode' in self.agent_assignment:
+        if self.agent_assignment and "mode" in self.agent_assignment:
             task = self._select_assigned_task(date, available_tasks)
         else:
             # Random selection (default behavior)
             task = random.choice(available_tasks)
 
         # Add max_payment to task based on task values
-        task_id = task['task_id']
+        task_id = task["task_id"]
         if task_id in self.task_values:
-            task['max_payment'] = self.task_values[task_id]
+            task["max_payment"] = self.task_values[task_id]
         else:
-            task['max_payment'] = self.default_max_payment
+            task["max_payment"] = self.default_max_payment
             if self.task_values:  # Only warn if we expected values
-                print(f"⚠️  No price found for task {task_id}, using default ${self.default_max_payment}")
+                print(
+                    f"⚠️  No price found for task {task_id}, using default ${self.default_max_payment}"
+                )
 
         # Track selection
-        self.daily_tasks[date] = task['task_id']
+        self.daily_tasks[date] = task["task_id"]
         self.used_tasks.add(task_id)  # Mark task as used
 
         # Log assignment if signature provided
@@ -371,7 +373,9 @@ class TaskManager:
 
         return task
 
-    def _select_assigned_task(self, date: str, available_tasks: List[Dict]) -> Optional[Dict]:
+    def _select_assigned_task(
+        self, date: str, available_tasks: List[Dict]
+    ) -> Optional[Dict]:
         """
         Select task based on explicit assignment configuration
 
@@ -385,40 +389,45 @@ class TaskManager:
         Raises:
             ValueError: If task assignment configuration is invalid
         """
-        mode = self.agent_assignment.get('mode', 'sequential')
-        assigned_ids = self.agent_assignment.get('task_ids', [])
+        mode = self.agent_assignment.get("mode", "sequential")
+        assigned_ids = self.agent_assignment.get("task_ids", [])
 
         if not assigned_ids:
             raise ValueError("task_assignment.task_ids is empty")
 
         # Filter assigned_ids to only include unused tasks
         available_assigned_ids = [
-            tid for tid in assigned_ids
-            if tid not in self.used_tasks
+            tid for tid in assigned_ids if tid not in self.used_tasks
         ]
 
         if not available_assigned_ids:
             print(f"⚠️  No more assigned tasks available")
             return None
 
-        if mode == 'sequential' or mode == 'cycle':
+        if mode == "sequential" or mode == "cycle":
             # Select tasks in order from available assigned tasks
-            if mode == 'sequential' and self.assignment_index >= len(available_assigned_ids):
+            if mode == "sequential" and self.assignment_index >= len(
+                available_assigned_ids
+            ):
                 # Sequential mode exhausted
                 print(f"⚠️  All assigned tasks completed (sequential mode)")
                 return None
 
-            task_id = available_assigned_ids[self.assignment_index % len(available_assigned_ids)]
+            task_id = available_assigned_ids[
+                self.assignment_index % len(available_assigned_ids)
+            ]
             self.assignment_index += 1
             task = self._get_task_by_id(task_id)
 
             if not task:
                 raise ValueError(f"Task ID {task_id} not found in loaded tasks")
 
-            print(f"   Assignment mode: {mode} ({self.assignment_index}/{len(available_assigned_ids)} available)")
+            print(
+                f"   Assignment mode: {mode} ({self.assignment_index}/{len(available_assigned_ids)} available)"
+            )
             return task
 
-        elif mode == 'random':
+        elif mode == "random":
             # Random selection from available assigned tasks
             task_id = random.choice(available_assigned_ids)
             task = self._get_task_by_id(task_id)
@@ -426,7 +435,9 @@ class TaskManager:
             if not task:
                 raise ValueError(f"Task ID {task_id} not found in loaded tasks")
 
-            print(f"   Assignment mode: random (from {len(available_assigned_ids)} available tasks)")
+            print(
+                f"   Assignment mode: random (from {len(available_assigned_ids)} available tasks)"
+            )
             return task
 
         else:
@@ -459,12 +470,12 @@ class TaskManager:
         """
         # Search filtered list first
         for task in self.filtered_tasks_list:
-            if task['task_id'] == task_id:
+            if task["task_id"] == task_id:
                 return task
 
         # Fallback to full task list if not in filtered
         for task in self.tasks_list:
-            if task['task_id'] == task_id:
+            if task["task_id"] == task_id:
                 return task
 
         return None
@@ -479,7 +490,7 @@ class TaskManager:
         Returns:
             Task prompt string
         """
-        return task['prompt']
+        return task["prompt"]
 
     def get_task_reference_files(self, task: Dict) -> List[str]:
         """
@@ -491,7 +502,7 @@ class TaskManager:
         Returns:
             List of file paths (absolute paths if base path available, otherwise relative)
         """
-        reference_files = task.get('reference_files', [])
+        reference_files = task.get("reference_files", [])
 
         # If no reference files, return empty list
         # Handle both list and numpy array (from pandas DataFrame)
@@ -505,7 +516,7 @@ class TaskManager:
             return []
 
         # Convert to list if it's a numpy array
-        if hasattr(reference_files, 'tolist'):
+        if hasattr(reference_files, "tolist"):
             reference_files = reference_files.tolist()
 
         # Convert to absolute paths if we have a base path
@@ -529,9 +540,9 @@ class TaskManager:
         Returns:
             Summary string
         """
-        prompt = task['prompt']
+        prompt = task["prompt"]
         # Get first 200 characters as summary
-        summary = prompt[:200].replace('\n', ' ')
+        summary = prompt[:200].replace("\n", " ")
         if len(prompt) > 200:
             summary += "..."
 
@@ -553,6 +564,7 @@ class TaskManager:
         def to_serializable(obj):
             """Convert numpy/pandas types to JSON-serializable types"""
             import numpy as np
+
             if isinstance(obj, np.ndarray):
                 return obj.tolist()
             elif isinstance(obj, (np.integer, np.int64, np.int32)):
@@ -572,12 +584,14 @@ class TaskManager:
         log_entry = {
             "date": date,
             "timestamp": datetime.now().isoformat(),
-            "task_id": to_serializable(task['task_id']),
-            "sector": to_serializable(task['sector']),
-            "occupation": to_serializable(task['occupation']),
-            "prompt": to_serializable(task.get('prompt', '')),
-            "max_payment": to_serializable(task.get('max_payment', self.default_max_payment)),
-            "reference_files": to_serializable(task.get('reference_files', []))
+            "task_id": to_serializable(task["task_id"]),
+            "sector": to_serializable(task["sector"]),
+            "occupation": to_serializable(task["occupation"]),
+            "prompt": to_serializable(task.get("prompt", "")),
+            "max_payment": to_serializable(
+                task.get("max_payment", self.default_max_payment)
+            ),
+            "reference_files": to_serializable(task.get("reference_files", [])),
         }
 
         # Append to log file
@@ -597,21 +611,23 @@ class TaskManager:
         return {
             "total_tasks": len(self.tasks_list),
             "sectors": {
-                "count": self.tasks_df['sector'].nunique(),
-                "list": self.tasks_df['sector'].unique().tolist()
+                "count": self.tasks_df["sector"].nunique(),
+                "list": self.tasks_df["sector"].unique().tolist(),
             },
             "occupations": {
-                "count": self.tasks_df['occupation'].nunique(),
-                "list": self.tasks_df['occupation'].unique().tolist()
+                "count": self.tasks_df["occupation"].nunique(),
+                "list": self.tasks_df["occupation"].unique().tolist(),
             },
-            "tasks_assigned": len(self.daily_tasks)
+            "tasks_assigned": len(self.daily_tasks),
         }
 
     def get_all_task_ids(self) -> List[str]:
         """Get all task IDs in the filtered task list (for exhaust mode)"""
-        return [task['task_id'] for task in self.filtered_tasks_list]
+        return [task["task_id"] for task in self.filtered_tasks_list]
 
-    def force_assign_task(self, task_id: str, date: str, signature: Optional[str] = None) -> Optional[Dict]:
+    def force_assign_task(
+        self, task_id: str, date: str, signature: Optional[str] = None
+    ) -> Optional[Dict]:
         """
         Force-assign a specific task to a date, bypassing the 'used' check.
         Used in exhaust mode to pre-select a task before run_daily_session is called.
@@ -632,9 +648,9 @@ class TaskManager:
 
         # Set max_payment based on task values
         if task_id in self.task_values:
-            task['max_payment'] = self.task_values[task_id]
+            task["max_payment"] = self.task_values[task_id]
         else:
-            task['max_payment'] = self.default_max_payment
+            task["max_payment"] = self.default_max_payment
 
         # Pre-assign to date so select_daily_task returns it immediately
         self.daily_tasks[date] = task_id

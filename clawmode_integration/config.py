@@ -20,6 +20,7 @@ _NANOBOT_CONFIG_PATH = Path.home() / ".nanobot" / "config.json"
 @dataclass
 class ClawWorkTokenPricing:
     """Token pricing (per 1M tokens)."""
+
     input_price: float = 2.5
     output_price: float = 10.0
 
@@ -30,6 +31,7 @@ class ClawWorkConfig:
 
     Loaded from ``agents.clawwork`` in ``~/.nanobot/config.json``.
     """
+
     enabled: bool = False
     signature: str = ""
     initial_balance: float = 1000.0

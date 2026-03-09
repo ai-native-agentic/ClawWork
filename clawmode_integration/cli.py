@@ -32,6 +32,7 @@ def _callback() -> None:
 # Helpers
 # -----------------------------------------------------------------------
 
+
 def _make_nanobot_provider(nanobot_config):
     """Create a LiteLLMProvider from nanobot config (mirrors nanobot CLI)."""
     from nanobot.providers.litellm_provider import LiteLLMProvider
@@ -79,11 +80,11 @@ def _build_state(nano_cfg):
     ~/.nanobot/config.json (via clawmode_integration.config), leaving
     nanobot's own Pydantic schema untouched.
     """
-    from livebench.agent.economic_tracker import EconomicTracker
-    from livebench.work.task_manager import TaskManager
-    from livebench.work.evaluator import WorkEvaluator
     from clawmode_integration.config import load_clawwork_config
     from clawmode_integration.tools import ClawWorkState
+    from livebench.agent.economic_tracker import EconomicTracker
+    from livebench.work.evaluator import WorkEvaluator
+    from livebench.work.task_manager import TaskManager
 
     # Inject nanobot credentials so LLMEvaluator can use them
     _inject_evaluation_credentials(nano_cfg)
@@ -92,8 +93,10 @@ def _build_state(nano_cfg):
 
     # Derive signature from config or fall back to model name
     sig = cw.signature or nano_cfg.agents.defaults.model.replace("/", "-")
-    data_path = str(Path(cw.data_path) / sig) if cw.data_path else str(
-        Path("./livebench/data/agent_data") / sig
+    data_path = (
+        str(Path(cw.data_path) / sig)
+        if cw.data_path
+        else str(Path("./livebench/data/agent_data") / sig)
     )
 
     # EconomicTracker
@@ -138,6 +141,7 @@ def _make_agent_loop(nano_cfg, cron_service=None):
     """
     from nanobot.bus.queue import MessageBus
     from nanobot.session.manager import SessionManager
+
     from clawmode_integration.agent_loop import ClawWorkAgentLoop
 
     bus = MessageBus()
@@ -184,11 +188,16 @@ def _check_clawwork_enabled() -> None:
 # Agent command (local CLI — like `nanobot agent` but with ClawWork)
 # -----------------------------------------------------------------------
 
+
 @app.command()
 def agent(
-    message: str = typer.Option(None, "--message", "-m", help="Message to send (omit for interactive mode)"),
+    message: str = typer.Option(
+        None, "--message", "-m", help="Message to send (omit for interactive mode)"
+    ),
     session_id: str = typer.Option("cli:clawwork", "--session", "-s", help="Session ID"),
-    markdown: bool = typer.Option(True, "--markdown/--no-markdown", help="Render output as Markdown"),
+    markdown: bool = typer.Option(
+        True, "--markdown/--no-markdown", help="Render output as Markdown"
+    ),
     logs: bool = typer.Option(False, "--logs/--no-logs", help="Show runtime logs"),
 ):
     """Chat with the agent locally, with ClawWork economic tracking.
@@ -201,8 +210,8 @@ def agent(
         python -m clawmode_integration.cli agent -m "/clawwork Write a market analysis"
         python -m clawmode_integration.cli agent -m "What is my balance?"
     """
-    from rich.console import Console
     from nanobot.config.loader import load_config
+    from rich.console import Console
 
     if logs:
         logger.enable("nanobot")
@@ -218,6 +227,7 @@ def agent(
     def _thinking_ctx():
         if logs:
             from contextlib import nullcontext
+
             return nullcontext()
         return console.status("[dim]clawwork is thinking...[/dim]", spinner="dots")
 
@@ -226,6 +236,7 @@ def agent(
             return
         if markdown:
             from rich.markdown import Markdown
+
             console.print(Markdown(text))
         else:
             console.print(text)
@@ -289,6 +300,7 @@ def agent(
 # Gateway command (channels — Telegram, Discord, Slack, etc.)
 # -----------------------------------------------------------------------
 
+
 @app.command()
 def gateway(
     port: int = typer.Option(18790, "--port", "-p", help="Gateway port"),
@@ -304,8 +316,8 @@ def gateway(
     Every LLM call is cost-tracked and a balance footer is appended to
     each response.
     """
-    from nanobot.config.loader import load_config, get_data_dir
     from nanobot.channels.manager import ChannelManager
+    from nanobot.config.loader import get_data_dir, load_config
     from nanobot.cron.service import CronService
 
     _check_clawwork_enabled()

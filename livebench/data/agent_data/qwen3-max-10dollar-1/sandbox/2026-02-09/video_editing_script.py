@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Video editing script for Goodsin Studios showreel
@@ -8,6 +7,7 @@ as specified in the task requirements.
 
 import os
 from moviepy.editor import *
+
 
 def create_goodsin_showreel():
     """
@@ -21,14 +21,14 @@ def create_goodsin_showreel():
         "Shores_Comp_04222020.mp4",  # Collapsing building
         "BuildingExplosion+Destruction(TyFlow+Phoenix).mp4",  # Building explosions
         "Helicopter_DustSim(TyFlow+Phoenix).mp4",  # Helicopter landing with dust sim
-        "logo_2.mp4"  # Ending logo
+        "logo_2.mp4",  # Ending logo
     ]
 
     # Sound effects
     sound_effects = {
         "logos.mp4": "Mountain Audio - Electricity.mp3",
         "CastleExplosion(TyFlow+Phoenix).mp4": "ExplosionFire PS01_92.wav",
-        "Shores_Comp_04222020.mp4": "LargeMultiImpactsW PE280701.wav"
+        "Shores_Comp_04222020.mp4": "LargeMultiImpactsW PE280701.wav",
     }
 
     # Music track
@@ -48,9 +48,9 @@ def create_goodsin_showreel():
     # Add main content clips (most advanced shots first)
     main_clips = [
         "CastleExplosion(TyFlow+Phoenix).mp4",
-        "Shores_Comp_04222020.mp4", 
+        "Shores_Comp_04222020.mp4",
         "BuildingExplosion+Destruction(TyFlow+Phoenix).mp4",
-        "Helicopter_DustSim(TyFlow+Phoenix).mp4"
+        "Helicopter_DustSim(TyFlow+Phoenix).mp4",
     ]
 
     for clip_name in main_clips:
@@ -101,10 +101,9 @@ def create_goodsin_showreel():
                 music = music.subclip(0, final_video.duration)
 
             # Mix music with existing audio (reduce music volume to avoid overpowering SFX)
-            final_audio = CompositeAudioClip([
-                final_video.audio,
-                music.volumex(0.3)  # Reduce music volume to 30%
-            ])
+            final_audio = CompositeAudioClip(
+                [final_video.audio, music.volumex(0.3)]  # Reduce music volume to 30%
+            )
             final_video = final_video.set_audio(final_audio)
 
         # Write final video
@@ -114,13 +113,14 @@ def create_goodsin_showreel():
             codec="libx264",
             audio_codec="aac",
             temp_audiofile="temp-audio.m4a",
-            remove_temp=True
+            remove_temp=True,
         )
 
         print("ARTIFACT_PATH:/home/user/work/goodsin_studios_showreel.mp4")
         return True
 
     return False
+
 
 if __name__ == "__main__":
     success = create_goodsin_showreel()

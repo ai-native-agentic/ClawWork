@@ -13,7 +13,6 @@ from datetime import datetime
 
 from livebench.utils.logger import get_logger
 
-
 # Global state (will be set by agent)
 _global_state = {}
 
@@ -26,7 +25,7 @@ def set_global_state(
     current_date: str,
     current_task: Dict,
     data_path: str,
-    supports_multimodal: bool = True
+    supports_multimodal: bool = True,
 ):
     """Set global state for tools"""
     global _global_state
@@ -38,7 +37,7 @@ def set_global_state(
         "current_date": current_date,
         "current_task": current_task,
         "data_path": data_path,
-        "supports_multimodal": supports_multimodal
+        "supports_multimodal": supports_multimodal,
     }
 
 
@@ -59,30 +58,32 @@ def decide_activity(activity: str, reasoning: str) -> Dict[str, Any]:
     if activity not in ["work", "learn"]:
         return {
             "error": "Invalid activity. Must be 'work' or 'learn'",
-            "valid_options": ["work", "learn"]
+            "valid_options": ["work", "learn"],
         }
 
     if len(reasoning) < 50:
         return {
             "error": "Reasoning must be at least 50 characters",
-            "current_length": len(reasoning)
+            "current_length": len(reasoning),
         }
 
     return {
         "success": True,
         "activity": activity,
         "reasoning": reasoning,
-        "message": f"✅ Decision made: {activity.upper()}"
+        "message": f"✅ Decision made: {activity.upper()}",
     }
 
 
 @tool
-def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, None] = None) -> Dict[str, Any]:
+def submit_work(
+    work_output: str = "", artifact_file_paths: Union[list, str, None] = None
+) -> Dict[str, Any]:
     """
     Submit completed work for evaluation and payment.
 
     Args:
-        work_output: Your completed work as text (detailed answer to the task). 
+        work_output: Your completed work as text (detailed answer to the task).
                      Minimum 100 characters if no artifact_file_paths provided.
         artifact_file_paths: Optional list of file paths to artifacts you created
                             (e.g., Excel files, PDFs, Python scripts). Use absolute paths.
@@ -90,14 +91,14 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
 
     Returns:
         Dictionary with evaluation result and payment
-        
+
     Examples:
         # Submit text answer only
         submit_work(work_output="My detailed analysis of...")
-        
+
         # Submit files only
         submit_work(artifact_file_paths=["/tmp/report.xlsx", "/tmp/analysis.py"])
-        
+
         # Submit both text and files
         submit_work(
             work_output="Here is my analysis...",
@@ -105,7 +106,7 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
         )
     """
     logger = get_logger()
-    
+
     # Normalize artifact_file_paths - handle both list and JSON string formats
     if artifact_file_paths is None:
         artifact_file_paths = []
@@ -119,7 +120,7 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
                     logger.info(
                         "Converted JSON string to list for artifact_file_paths",
                         context={"count": len(artifact_file_paths)},
-                        print_console=False
+                        print_console=False,
                     )
             else:
                 return {
@@ -129,30 +130,33 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
             return {
                 "error": f"artifact_file_paths is a string but not valid JSON: {str(e)}"
             }
-    
+
     # Validate input - must have either work_output or artifact_file_paths
     if not work_output and not artifact_file_paths:
         if logger:
             logger.warning(
                 "No work submitted",
-                context={"has_output": bool(work_output), "has_files": bool(artifact_file_paths)},
-                print_console=False
+                context={
+                    "has_output": bool(work_output),
+                    "has_files": bool(artifact_file_paths),
+                },
+                print_console=False,
             )
         return {
             "error": "Must provide either work_output (text) or artifact_file_paths (files), or both"
         }
-    
+
     # Validate work_output length if no files provided
     if work_output and not artifact_file_paths and len(work_output) < 100:
         if logger:
             logger.warning(
                 "Work output too short and no files provided",
                 context={"length": len(work_output), "required": 100},
-                print_console=False
+                print_console=False,
             )
         return {
             "error": "Work output too short. Minimum 100 characters required when not submitting files.",
-            "current_length": len(work_output)
+            "current_length": len(work_output),
         }
 
     # Get global state
@@ -176,15 +180,15 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
                     "has_data_path": data_path is not None,
                     "current_date": date,
                     "signature": signature,
-                    "global_state_keys": list(_global_state.keys())
+                    "global_state_keys": list(_global_state.keys()),
                 },
-                print_console=True
+                print_console=True,
             )
         return {"error": "No task assigned for today"}
 
     # Prepare artifact paths list
     all_artifact_paths = []
-    
+
     # Save work_output to file if provided
     if work_output:
         work_dir = os.path.join(data_path, "work")
@@ -195,66 +199,66 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
 
         with open(text_artifact_path, "w", encoding="utf-8") as f:
             f.write(work_output)
-        
+
         all_artifact_paths.append(text_artifact_path)
-        
+
         if logger:
             logger.info(
                 "Text work artifact saved",
                 context={"path": text_artifact_path, "length": len(work_output)},
-                print_console=False
+                print_console=False,
             )
-    
+
     # Add provided file paths
     if artifact_file_paths:
         # Verify files exist
         existing_files = []
         missing_files = []
-        
+
         for file_path in artifact_file_paths:
             if os.path.exists(file_path):
                 existing_files.append(file_path)
             else:
                 missing_files.append(file_path)
-        
+
         if missing_files:
             error_msg = f"Some artifact files not found: {missing_files}"
             if logger:
                 logger.error(
                     "Artifact files missing",
                     context={"missing": missing_files, "existing": existing_files},
-                    print_console=True
+                    print_console=True,
                 )
             return {
                 "error": error_msg,
                 "missing_files": missing_files,
-                "existing_files": existing_files
+                "existing_files": existing_files,
             }
-        
+
         all_artifact_paths.extend(existing_files)
-        
+
         if logger:
             logger.info(
                 "File artifacts added",
                 context={
                     "count": len(existing_files),
-                    "files": [os.path.basename(f) for f in existing_files]
+                    "files": [os.path.basename(f) for f in existing_files],
                 },
-                print_console=False
+                print_console=False,
             )
-    
+
     # Log submission
     if logger:
         logger.info(
             "Submitting work for evaluation",
             context={
-                "task_id": task['task_id'],
+                "task_id": task["task_id"],
                 "total_artifacts": len(all_artifact_paths),
-                "artifact_types": [os.path.splitext(f)[1] for f in all_artifact_paths]
+                "artifact_types": [os.path.splitext(f)[1] for f in all_artifact_paths],
             },
-            print_console=False
+            print_console=False,
         )
-    
+
     # Build submission summary for agent feedback
     submission_summary = []
     submission_summary.append(f"📦 WORK SUBMISSION SUMMARY:")
@@ -262,21 +266,21 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
     for i, path in enumerate(all_artifact_paths, 1):
         file_type = os.path.splitext(path)[1] or "text"
         file_size = os.path.getsize(path) if os.path.exists(path) else 0
-        submission_summary.append(f"   {i}. {os.path.basename(path)} ({file_type}, {file_size} bytes)")
+        submission_summary.append(
+            f"   {i}. {os.path.basename(path)} ({file_type}, {file_size} bytes)"
+        )
 
     # Evaluate work with all artifacts
     accepted, payment, feedback, evaluation_score = evaluator.evaluate_artifact(
         signature=signature,
         task=task,
         artifact_path=all_artifact_paths,  # Pass list of all artifacts
-        description=f"Work submission with {len(all_artifact_paths)} artifact(s)"
+        description=f"Work submission with {len(all_artifact_paths)} artifact(s)",
     )
 
     # Record payment with evaluation score threshold (applies cliff at 0.6)
     actual_payment = economic_tracker.add_work_income(
-        amount=payment,
-        task_id=task["task_id"],
-        evaluation_score=evaluation_score
+        amount=payment, task_id=task["task_id"], evaluation_score=evaluation_score
     )
 
     result = {
@@ -286,7 +290,7 @@ def submit_work(work_output: str = "", artifact_file_paths: Union[list, str, Non
         "feedback": feedback,
         "evaluation_score": evaluation_score,
         "artifact_paths": all_artifact_paths,  # Return list of all artifacts
-        "submission_summary": "\n".join(submission_summary)
+        "submission_summary": "\n".join(submission_summary),
     }
 
     if actual_payment > 0:
@@ -310,7 +314,7 @@ def learn(topic: str, knowledge: str) -> Dict[str, Any]:
     if len(knowledge) < 200:
         return {
             "error": "Knowledge content too short. Minimum 200 characters required.",
-            "current_length": len(knowledge)
+            "current_length": len(knowledge),
         }
 
     signature = _global_state.get("signature")
@@ -327,7 +331,7 @@ def learn(topic: str, knowledge: str) -> Dict[str, Any]:
         "date": date,
         "timestamp": datetime.now().isoformat(),
         "topic": topic,
-        "knowledge": knowledge
+        "knowledge": knowledge,
     }
 
     with open(memory_file, "a", encoding="utf-8") as f:
@@ -337,7 +341,7 @@ def learn(topic: str, knowledge: str) -> Dict[str, Any]:
         "success": True,
         "topic": topic,
         "knowledge_length": len(knowledge),
-        "message": f"✅ Learned about: {topic}"
+        "message": f"✅ Learned about: {topic}",
     }
 
 
@@ -358,7 +362,7 @@ def get_status() -> Dict[str, Any]:
         "balance": tracker.get_balance(),
         "net_worth": tracker.get_net_worth(),
         "daily_cost": tracker.get_daily_cost(),
-        "status": tracker.get_survival_status()
+        "status": tracker.get_survival_status(),
     }
 
 
@@ -370,17 +374,22 @@ try:
         execute_code_sandbox,
         read_file,
         create_video,
-        read_webpage as _read_webpage_original
+        read_webpage as _read_webpage_original,
     )
+
     PRODUCTIVITY_TOOLS_AVAILABLE = True
 except ImportError:
     PRODUCTIVITY_TOOLS_AVAILABLE = False
-    print("⚠️ Productivity tools not available (livebench.tools.productivity not found)")
+    print(
+        "⚠️ Productivity tools not available (livebench.tools.productivity not found)"
+    )
 
 
 # Wrap search_web to track API costs (Tavily or Jina)
 @tool
-def search_web(query: str, max_results: int = 5, provider: str = None) -> Dict[str, Any]:
+def search_web(
+    query: str, max_results: int = 5, provider: str = None
+) -> Dict[str, Any]:
     """
     Search the internet for information using Tavily (default, with AI-generated answers) or Jina AI.
 
@@ -403,11 +412,9 @@ def search_web(query: str, max_results: int = 5, provider: str = None) -> Dict[s
         return {"error": "Search tool not available"}
 
     # Call original search_web with provider parameter
-    result = _search_web_original.invoke({
-        "query": query,
-        "max_results": max_results,
-        "provider": provider
-    })
+    result = _search_web_original.invoke(
+        {"query": query, "max_results": max_results, "provider": provider}
+    )
 
     # Track API cost if search was successful
     if isinstance(result, dict) and result.get("success"):
@@ -419,8 +426,7 @@ def search_web(query: str, max_results: int = 5, provider: str = None) -> Dict[s
                 if provider_used == "tavily":
                     # Tavily: Flat rate of $0.0008 per call
                     cost = tracker.track_flat_api_call(
-                        cost=0.0008,
-                        api_name="Tavily_Search"
+                        cost=0.0008, api_name="Tavily_Search"
                     )
                     result["api_cost"] = f"${cost:.6f}"
                     result["cost_type"] = "flat_rate"
@@ -433,7 +439,7 @@ def search_web(query: str, max_results: int = 5, provider: str = None) -> Dict[s
                     cost = tracker.track_api_call(
                         tokens=estimated_tokens,
                         price_per_1m=0.05,
-                        api_name="Jina_Search"
+                        api_name="Jina_Search",
                     )
                     result["api_cost"] = f"${cost:.6f}"
                     result["estimated_tokens"] = estimated_tokens
@@ -443,16 +449,16 @@ def search_web(query: str, max_results: int = 5, provider: str = None) -> Dict[s
             # Handle case where track_flat_api_call doesn't exist yet
             logger = get_logger()
             if logger:
-                logger.warning(f"Economic tracker missing flat rate support, using fallback: {e}")
+                logger.warning(
+                    f"Economic tracker missing flat rate support, using fallback: {e}"
+                )
 
             # Fallback: Use track_api_call with fake tokens to achieve flat rate
             if result.get("provider") == "tavily":
                 # $0.0008 per call = 16 tokens at $0.05 per 1M tokens
                 fake_tokens = int(0.0008 * 1_000_000 / 0.05)
                 cost = tracker.track_api_call(
-                    tokens=fake_tokens,
-                    price_per_1m=0.05,
-                    api_name="Tavily_Search"
+                    tokens=fake_tokens, price_per_1m=0.05, api_name="Tavily_Search"
                 )
                 result["api_cost"] = f"${cost:.6f}"
 
@@ -484,10 +490,7 @@ def read_webpage(urls: str, query: str = None) -> Dict[str, Any]:
         return {"error": "Webpage extraction tool not available"}
 
     # Call original read_webpage
-    result = _read_webpage_original.invoke({
-        "urls": urls,
-        "query": query
-    })
+    result = _read_webpage_original.invoke({"urls": urls, "query": query})
 
     # Track API cost if extraction was successful
     if isinstance(result, dict) and result.get("success"):
@@ -496,8 +499,7 @@ def read_webpage(urls: str, query: str = None) -> Dict[str, Any]:
             if tracker:
                 # Tavily Extract: Flat rate of $0.00016 per call (1 credit per 5 extractions)
                 cost = tracker.track_flat_api_call(
-                    cost=0.00016,
-                    api_name="Tavily_Extract"
+                    cost=0.00016, api_name="Tavily_Extract"
                 )
                 result["api_cost"] = f"${cost:.6f}"
                 result["cost_type"] = "flat_rate"
@@ -506,15 +508,15 @@ def read_webpage(urls: str, query: str = None) -> Dict[str, Any]:
             # Fallback for older tracker versions
             logger = get_logger()
             if logger:
-                logger.warning("Economic tracker missing flat rate support for webpage extraction")
+                logger.warning(
+                    "Economic tracker missing flat rate support for webpage extraction"
+                )
 
             # Use track_api_call with fake tokens to achieve flat rate
             # $0.00016 per call = 3.2 tokens at $0.05 per 1M tokens
             fake_tokens = int(0.00016 * 1_000_000 / 0.05)
             cost = tracker.track_api_call(
-                tokens=fake_tokens,
-                price_per_1m=0.05,
-                api_name="Tavily_Extract"
+                tokens=fake_tokens, price_per_1m=0.05, api_name="Tavily_Extract"
             )
             result["api_cost"] = f"${cost:.6f}"
 
@@ -548,7 +550,7 @@ def get_all_tools():
             create_file,
             execute_code_sandbox,
             read_file,
-            create_video
+            create_video,
         ]
         return core_tools + productivity_tools
     else:

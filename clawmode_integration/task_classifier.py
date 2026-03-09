@@ -13,7 +13,6 @@ from typing import Any
 
 from loguru import logger
 
-
 # Default fallback occupation
 _FALLBACK_OCCUPATION = "General and Operations Managers"
 _FALLBACK_WAGE = 64.0
@@ -104,8 +103,7 @@ class TaskClassifier:
             return self._fallback_result(instruction)
 
         occupation_list = "\n".join(
-            f"- {name} (${wage:.2f}/hr)"
-            for name, wage in sorted(self._occupations.items())
+            f"- {name} (${wage:.2f}/hr)" for name, wage in sorted(self._occupations.items())
         )
 
         prompt = _CLASSIFICATION_PROMPT.format(
@@ -136,9 +134,7 @@ class TaskClassifier:
             occupation, wage = self._fuzzy_match(raw_occupation)
             task_value = round(hours * wage, 2)
 
-            logger.info(
-                f"Classified: {occupation} | {hours}h x ${wage:.2f}/hr = ${task_value:.2f}"
-            )
+            logger.info(f"Classified: {occupation} | {hours}h x ${wage:.2f}/hr = ${task_value:.2f}")
 
             return {
                 "occupation": occupation,

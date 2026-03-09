@@ -27,9 +27,11 @@ load_dotenv()
 
 # Import global state from parent module
 
+
 def _get_global_state():
     """Get global state from parent module."""
     from livebench.tools.direct_tools import _global_state
+
     return _global_state
 
 
@@ -37,7 +39,17 @@ _ARTIFACT_PATH_RE = re.compile(r"ARTIFACT_PATH:(\S+)")
 _REFERENCE_REMOTE_DIR = "/home/user/reference_files"
 _DEFAULT_ARTIFACT_DIRS = ["/tmp", "/home/user", "/home/user/artifacts"]
 _DEFAULT_ARTIFACT_EXTENSIONS = [
-    ".txt", ".docx", ".xlsx", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".json", ".md", ".pptx"
+    ".txt",
+    ".docx",
+    ".xlsx",
+    ".csv",
+    ".pdf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".json",
+    ".md",
+    ".pptx",
 ]
 _VALID_PROVIDERS = {"boxlite", "e2b"}
 
@@ -68,13 +80,17 @@ class SandboxBackend:
     def execute_code(self, code: str) -> SandboxExecutionResult:
         raise NotImplementedError
 
-    def upload_reference_file(self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR) -> str:
+    def upload_reference_file(
+        self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR
+    ) -> str:
         raise NotImplementedError
 
     def download_artifact(self, remote_path: str, local_dir: str) -> str:
         raise NotImplementedError
 
-    def list_artifacts(self, base_dirs: List[str], artifact_extensions: List[str]) -> List[str]:
+    def list_artifacts(
+        self, base_dirs: List[str], artifact_extensions: List[str]
+    ) -> List[str]:
         raise NotImplementedError
 
     def cleanup(self) -> None:
@@ -100,6 +116,7 @@ class E2BSandboxBackend(SandboxBackend):
     def _lazy_import(self):
         if self._sandbox_cls is None:
             from e2b_code_interpreter import Sandbox  # Lazy import by design
+
             self._sandbox_cls = Sandbox
 
     def ensure_started(self, timeout: int = 3600) -> None:
@@ -143,7 +160,9 @@ class E2BSandboxBackend(SandboxBackend):
             stderr=stderr,
         )
 
-    def upload_reference_file(self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR) -> str:
+    def upload_reference_file(
+        self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR
+    ) -> str:
         self.ensure_started()
 
         if not os.path.exists(local_path):
@@ -169,7 +188,9 @@ class E2BSandboxBackend(SandboxBackend):
 
         return local_path
 
-    def list_artifacts(self, base_dirs: List[str], artifact_extensions: List[str]) -> List[str]:
+    def list_artifacts(
+        self, base_dirs: List[str], artifact_extensions: List[str]
+    ) -> List[str]:
         self.ensure_started()
 
         artifacts: List[str] = []
@@ -233,7 +254,9 @@ class BoxLiteSandboxBackend(SandboxBackend):
                 ) from exc
 
             required_methods = ("exec", "__enter__", "__exit__")
-            missing_methods = [name for name in required_methods if not hasattr(SyncCodeBox, name)]
+            missing_methods = [
+                name for name in required_methods if not hasattr(SyncCodeBox, name)
+            ]
             if missing_methods:
                 raise RuntimeError(
                     "Installed BoxLite sync API is incompatible: missing "
@@ -289,7 +312,9 @@ class BoxLiteSandboxBackend(SandboxBackend):
             stderr=result.stderr or "",
         )
 
-    def upload_reference_file(self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR) -> str:
+    def upload_reference_file(
+        self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR
+    ) -> str:
         self.ensure_started()
 
         if not os.path.exists(local_path):
@@ -322,7 +347,9 @@ p.write_bytes(base64.b64decode({encoded!r}))
 """
         result = self._box.exec("/usr/local/bin/python", "-c", upload_script)
         if result.exit_code != 0:
-            raise RuntimeError(f"BoxLite upload failed for {local_path}: {result.stderr or result.stdout}")
+            raise RuntimeError(
+                f"BoxLite upload failed for {local_path}: {result.stderr or result.stdout}"
+            )
         return remote_path
 
     def download_artifact(self, remote_path: str, local_dir: str) -> str:
@@ -376,7 +403,9 @@ print(base64.b64encode(p.read_bytes()).decode('ascii'))
                     candidate_files.append(os.path.join(root, f))
 
         if not candidate_files:
-            raise RuntimeError(f"Failed to download artifact from BoxLite: {remote_path}")
+            raise RuntimeError(
+                f"Failed to download artifact from BoxLite: {remote_path}"
+            )
 
         final_path = os.path.join(local_dir, filename)
         if os.path.isdir(final_path):
@@ -391,7 +420,9 @@ print(base64.b64encode(p.read_bytes()).decode('ascii'))
 
         return final_path
 
-    def list_artifacts(self, base_dirs: List[str], artifact_extensions: List[str]) -> List[str]:
+    def list_artifacts(
+        self, base_dirs: List[str], artifact_extensions: List[str]
+    ) -> List[str]:
         self.ensure_started()
 
         artifacts: List[str] = []
@@ -448,7 +479,9 @@ class SessionSandbox:
     def __init__(self):
         self.backend: Optional[SandboxBackend] = None
         self.provider: Optional[str] = None
-        self.provider_requested: str = os.getenv("CODE_SANDBOX_PROVIDER", "e2b").strip().lower() or "e2b"
+        self.provider_requested: str = (
+            os.getenv("CODE_SANDBOX_PROVIDER", "e2b").strip().lower() or "e2b"
+        )
         self.provider_diagnostics: List[str] = []
 
         # Backward-compatible attributes
@@ -542,7 +575,9 @@ class SessionSandbox:
         self._sync_compat_attrs()
         return backend.execute_code(code)
 
-    def upload_reference_file(self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR) -> str:
+    def upload_reference_file(
+        self, local_path: str, remote_dir: str = _REFERENCE_REMOTE_DIR
+    ) -> str:
         backend = self._ensure_backend(timeout=3600)
         remote_path = backend.upload_reference_file(local_path, remote_dir=remote_dir)
         self.uploaded_reference_files[local_path] = remote_path
@@ -633,7 +668,9 @@ def execute_code(code: str, language: str = "python") -> Dict[str, Any]:
 
                 for remote_path in artifact_paths:
                     try:
-                        local_path = session_sandbox.download_artifact(remote_path, local_sandbox_dir)
+                        local_path = session_sandbox.download_artifact(
+                            remote_path, local_sandbox_dir
+                        )
                         downloaded_artifacts.append(local_path)
                     except Exception as e:
                         print(f"⚠️ Warning: Could not download {remote_path}: {e}")
@@ -653,19 +690,26 @@ def execute_code(code: str, language: str = "python") -> Dict[str, Any]:
         }
 
         if session_sandbox.uploaded_reference_files:
-            result["message"] += f"\n\n📎 REFERENCE FILES AVAILABLE in sandbox at {_REFERENCE_REMOTE_DIR}/:"
-            for _local_path, remote_path in session_sandbox.uploaded_reference_files.items():
+            result[
+                "message"
+            ] += f"\n\n📎 REFERENCE FILES AVAILABLE in sandbox at {_REFERENCE_REMOTE_DIR}/:"
+            for (
+                _local_path,
+                remote_path,
+            ) in session_sandbox.uploaded_reference_files.items():
                 filename = os.path.basename(remote_path)
                 result["message"] += f"\n  • {filename} at {remote_path}"
 
         if downloaded_artifacts:
             result["downloaded_artifacts"] = downloaded_artifacts
-            result["message"] += (
-                f"\n\n📥 DOWNLOADED {len(downloaded_artifacts)} ARTIFACT(S) - Use these paths for submit_work:"
-            )
+            result[
+                "message"
+            ] += f"\n\n📥 DOWNLOADED {len(downloaded_artifacts)} ARTIFACT(S) - Use these paths for submit_work:"
             for path in downloaded_artifacts:
                 result["message"] += f"\n  ✅ {path}"
-            result["message"] += "\n\n⚠️ IMPORTANT: Use the paths above (not sandbox-internal /tmp paths) when calling submit_work!"
+            result[
+                "message"
+            ] += "\n\n⚠️ IMPORTANT: Use the paths above (not sandbox-internal /tmp paths) when calling submit_work!"
 
         if session_sandbox.provider_diagnostics:
             result["provider_diagnostics"] = session_sandbox.provider_diagnostics
@@ -700,14 +744,18 @@ def upload_task_reference_files(reference_file_paths: List[str]) -> List[str]:
         return []
 
     provider = session_sandbox.get_provider()
-    print(f"\n📤 Uploading {len(reference_file_paths)} reference file(s) to {provider} sandbox...")
+    print(
+        f"\n📤 Uploading {len(reference_file_paths)} reference file(s) to {provider} sandbox..."
+    )
     print(f"✅ Sandbox ready (provider: {provider}, id: {session_sandbox.sandbox_id})")
 
     remote_paths: List[str] = []
 
     for i, local_path in enumerate(reference_file_paths, 1):
         try:
-            print(f"\n[{i}/{len(reference_file_paths)}] Uploading: {os.path.basename(local_path)}")
+            print(
+                f"\n[{i}/{len(reference_file_paths)}] Uploading: {os.path.basename(local_path)}"
+            )
             remote_path = session_sandbox.upload_reference_file(local_path)
             remote_paths.append(remote_path)
             print(f"   ✅ Uploaded to: {remote_path}")

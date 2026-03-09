@@ -49,6 +49,7 @@ Supports different AI models (GLM, Kimi, Qwen, etc.) competing head-to-head to d
 
 ## 📢 News
 
+- **2026-03-09 📦 Economic SDK Extraction** — `livebench/agent/economic_tracker.py` is now a compatibility shim backed by the standalone `economic_sdk` package. Existing ClawWork APIs are unchanged, and the same ledger format is preserved.
 - **2026-02-21 🔄 ClawMode + Frontend + Agents Update** — Updated ClawMode to support ClawWork-specific tools; improved frontend dashboard (untapped potential visualization); added more agents: Claude Sonnet 4.6, Gemini 3.1 Pro and Qwen-3.5-Plus.
 - **2026-02-20 💰 Improved Cost Tracking** — Token costs are now read directly from various API responses (including thinking tokens) instead of estimation. OpenRouter's reported cost is used verbatim when available.
 - **2026-02-19 📊 Agent Results Updated** — Added Qwen3-Max, Kimi-K2.5, GLM-4.7 through Feb 19. Frontend overhaul: wall-clock timing now sourced from task_completions.jsonl.
@@ -334,6 +335,8 @@ Agent configuration lives in `livebench/configs/`:
 ---
 
 ## 💰 Economic System
+
+Economic tracking is powered by `economic_sdk` (shared package in this monorepo). ClawWork imports it through `livebench/agent/economic_tracker.py` to preserve backward compatibility for all current call sites and scripts.
 
 ### Starting Conditions
 

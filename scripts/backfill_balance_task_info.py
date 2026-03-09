@@ -19,6 +19,7 @@ Entries with date "initialization" or already having task_id set are skipped.
 Run from repo root:
     python scripts/backfill_balance_task_info.py
 """
+
 import json
 from collections import defaultdict
 from datetime import datetime
@@ -57,7 +58,7 @@ def build_date_to_task_ids_ordered(agent_dir: Path) -> dict:
     mapping: dict[str, list] = defaultdict(list)
     for entry in read_jsonl(agent_dir / "work" / "tasks.jsonl"):
         date = entry.get("date")
-        tid  = entry.get("task_id")
+        tid = entry.get("task_id")
         if date and tid:
             mapping[date].append(tid)
     return dict(mapping)
@@ -81,7 +82,7 @@ def build_task_durations(agent_dir: Path) -> dict:
         msg = entry.get("message", "")
         ctx = entry.get("context", {}) or {}
         tid = ctx.get("task_id")
-        ts  = entry.get("timestamp")
+        ts = entry.get("timestamp")
         if not (tid and ts):
             continue
         try:
@@ -107,9 +108,9 @@ def backfill_agent(agent_dir: Path) -> int:
     if not balance_file.exists():
         return 0
 
-    records     = read_jsonl(balance_file)
+    records = read_jsonl(balance_file)
     date_to_ids = build_date_to_task_ids_ordered(agent_dir)
-    durations   = build_task_durations(agent_dir)
+    durations = build_task_durations(agent_dir)
 
     # Track how many times we've seen each date so far (positional matching)
     date_seen: dict[str, int] = defaultdict(int)
@@ -124,13 +125,15 @@ def backfill_agent(agent_dir: Path) -> int:
             date_seen[date] += 1
             continue
 
-        idx  = date_seen[date]
+        idx = date_seen[date]
         tids = date_to_ids.get(date, [])
 
         if idx < len(tids):
             tid = tids[idx]
             rec["task_id"] = tid
-            rec["task_completion_time_seconds"] = durations.get(tid)  # None if learn day
+            rec["task_completion_time_seconds"] = durations.get(
+                tid
+            )  # None if learn day
             updated += 1
 
         date_seen[date] += 1
@@ -155,7 +158,9 @@ def main():
             print(f"  {agent_dir.name}: nothing to update")
         total_updated += n
 
-    print(f"\nDone — {total_updated} balance record(s) updated across {len(agent_dirs)} agent(s).")
+    print(
+        f"\nDone — {total_updated} balance record(s) updated across {len(agent_dirs)} agent(s)."
+    )
 
 
 if __name__ == "__main__":

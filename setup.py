@@ -1,6 +1,7 @@
 """
 LiveBench Setup
 """
+
 from setuptools import setup, find_packages
 
 setup(
@@ -13,4 +14,3 @@ setup(
         # Core dependencies - add as needed
     ],
 )
-

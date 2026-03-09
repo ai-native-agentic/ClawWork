@@ -1,0 +1,9 @@
+would reformat /Users/kjs/projects/ai-native-agentic/ClawWork/clawmode_integration/config.py
+would reformat /Users/kjs/projects/ai-native-agentic/ClawWork/clawmode_integration/task_classifier.py
+would reformat /Users/kjs/projects/ai-native-agentic/ClawWork/clawmode_integration/cli.py
+would reformat /Users/kjs/projects/ai-native-agentic/ClawWork/clawmode_integration/agent_loop.py
+would reformat /Users/kjs/projects/ai-native-agentic/ClawWork/clawmode_integration/artifact_tools.py
+would reformat /Users/kjs/projects/ai-native-agentic/ClawWork/clawmode_integration/tools.py
+
+Oh no! 💥 💔 💥
+6 files would be reformatted, 2 files would be left unchanged.

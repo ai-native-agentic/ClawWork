@@ -1,0 +1,31 @@
+project_name: "ClawWork"
+include_paths:
+  - "clawmode_integration"
+gates:
+  gate_a:
+    enabled: true
+    black_line_length: 100
+    ruff_select: ["E", "F", "I"]
+    mypy_strict: false
+  gate_b:
+    enabled: false
+    root_package: "clawmode_integration"
+    boundaries: []
+  gate_c:
+    enabled: true
+    max_function_length: 130
+    max_complexity: 23
+  gate_d:
+    enabled: false
+  gate_e:
+    enabled: false
+  gate_f:
+    enabled: false
+exclude_paths:
+  - "tests/"
+  - "frontend/"
+  - "venv/"
+  - ".venv/"
+  - "__pycache__/"
+  - ".pytest_cache/"
+  - ".git/"

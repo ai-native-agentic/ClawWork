@@ -26,6 +26,7 @@ OUTPUT_DIR = "./task_hour_estimates"
 OUTPUT_FILE = "task_hours.jsonl"
 LOG_FILE = "./task_hour_estimation.log"
 
+
 def log_message(message: str):
     """Log messages to both console and file"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -34,19 +35,19 @@ def log_message(message: str):
     with open(LOG_FILE, "a") as f:
         f.write(log_entry + "\n")
 
+
 def load_gdpval_data() -> pd.DataFrame:
     """Load the gdpval parquet file"""
     log_message(f"Loading data from {DATA_PATH}")
     df = pd.read_parquet(DATA_PATH)
-    log_message(f"Loaded {len(df)} tasks across {df['occupation'].nunique()} occupations")
+    log_message(
+        f"Loaded {len(df)} tasks across {df['occupation'].nunique()} occupations"
+    )
     return df
 
+
 def create_hour_estimation_prompt(
-    task_id: str,
-    occupation: str,
-    sector: str,
-    task_prompt: str,
-    reference_files: list
+    task_id: str, occupation: str, sector: str, task_prompt: str, reference_files: list
 ) -> str:
     """
     Create the prompt that asks GPT-5.2 to estimate hours needed for a task
@@ -127,12 +128,9 @@ Please provide your realistic hour estimate now."""
 
     return estimation_prompt
 
+
 def estimate_hours_for_task(
-    task_id: str,
-    occupation: str,
-    sector: str,
-    task_prompt: str,
-    reference_files: list
+    task_id: str, occupation: str, sector: str, task_prompt: str, reference_files: list
 ) -> Dict[str, Any]:
     """
     Use GPT-5.2 to estimate hours needed for a specific task
@@ -149,7 +147,7 @@ def estimate_hours_for_task(
         occupation=occupation,
         sector=sector,
         task_prompt=task_prompt,
-        reference_files=reference_files
+        reference_files=reference_files,
     )
 
     try:
@@ -160,64 +158,70 @@ def estimate_hours_for_task(
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert workforce analyst specializing in realistic task time estimation across all professional domains. You understand that experienced professionals are efficient and fast at their work. You provide conservative, realistic hour estimates based on actual focused work time (not padded calendar time). Most professional tasks take 1-6 hours."
+                    "content": "You are an expert workforce analyst specializing in realistic task time estimation across all professional domains. You understand that experienced professionals are efficient and fast at their work. You provide conservative, realistic hour estimates based on actual focused work time (not padded calendar time). Most professional tasks take 1-6 hours.",
                 },
-                {
-                    "role": "user",
-                    "content": estimation_prompt
-                }
+                {"role": "user", "content": estimation_prompt},
             ],
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
         )
 
         # Parse the response
         result = json.loads(response.choices[0].message.content)
 
         # Add metadata
-        result['metadata'] = {
-            'task_id': task_id,
-            'occupation': occupation,
-            'sector': sector,
-            'estimated_at': datetime.now().isoformat(),
-            'model': MODEL,
-            'prompt_tokens': response.usage.prompt_tokens,
-            'completion_tokens': response.usage.completion_tokens,
-            'total_tokens': response.usage.total_tokens
+        result["metadata"] = {
+            "task_id": task_id,
+            "occupation": occupation,
+            "sector": sector,
+            "estimated_at": datetime.now().isoformat(),
+            "model": MODEL,
+            "prompt_tokens": response.usage.prompt_tokens,
+            "completion_tokens": response.usage.completion_tokens,
+            "total_tokens": response.usage.total_tokens,
         }
 
-        log_message(f"✅ Successfully estimated hours for {task_id}: {result.get('hours_estimate', 'N/A')} hours (tokens: {response.usage.total_tokens})")
+        log_message(
+            f"✅ Successfully estimated hours for {task_id}: {result.get('hours_estimate', 'N/A')} hours (tokens: {response.usage.total_tokens})"
+        )
         return result
 
     except Exception as e:
         log_message(f"❌ ERROR estimating hours for {task_id}: {str(e)}")
         raise
 
+
 def load_existing_estimates(output_file: Path) -> set:
     """Load already processed task IDs from the output file"""
     processed_ids = set()
     if output_file.exists():
-        with open(output_file, 'r') as f:
+        with open(output_file, "r") as f:
             for line in f:
                 try:
                     data = json.loads(line.strip())
-                    task_id = data.get('task_id') or data.get('metadata', {}).get('task_id')
+                    task_id = data.get("task_id") or data.get("metadata", {}).get(
+                        "task_id"
+                    )
                     if task_id:
                         processed_ids.add(task_id)
                 except Exception as e:
-                    log_message(f"Warning: Could not parse line in existing output: {str(e)}")
+                    log_message(
+                        f"Warning: Could not parse line in existing output: {str(e)}"
+                    )
     return processed_ids
+
 
 def save_estimate(estimate: Dict[str, Any], output_file: Path):
     """Append the estimate to the JSONL output file"""
-    with open(output_file, 'a') as f:
+    with open(output_file, "a") as f:
         f.write(json.dumps(estimate) + "\n")
+
 
 def generate_summary_report(output_file: Path):
     """Generate a summary report of all estimates"""
     log_message("Generating summary report...")
 
     estimates = []
-    with open(output_file, 'r') as f:
+    with open(output_file, "r") as f:
         for line in f:
             try:
                 estimates.append(json.loads(line.strip()))
@@ -229,23 +233,23 @@ def generate_summary_report(output_file: Path):
         return
 
     # Calculate statistics
-    hours = [e.get('hours_estimate', 0) for e in estimates]
+    hours = [e.get("hours_estimate", 0) for e in estimates]
     total_hours = sum(hours)
     avg_hours = total_hours / len(hours) if hours else 0
     min_hours = min(hours) if hours else 0
     max_hours = max(hours) if hours else 0
 
     # Token usage
-    total_tokens = sum(e.get('metadata', {}).get('total_tokens', 0) for e in estimates)
+    total_tokens = sum(e.get("metadata", {}).get("total_tokens", 0) for e in estimates)
 
     # Group by occupation
     occupation_stats = {}
     for e in estimates:
-        occ = e.get('metadata', {}).get('occupation', 'Unknown')
+        occ = e.get("metadata", {}).get("occupation", "Unknown")
         if occ not in occupation_stats:
-            occupation_stats[occ] = {'count': 0, 'total_hours': 0}
-        occupation_stats[occ]['count'] += 1
-        occupation_stats[occ]['total_hours'] += e.get('hours_estimate', 0)
+            occupation_stats[occ] = {"count": 0, "total_hours": 0}
+        occupation_stats[occ]["count"] += 1
+        occupation_stats[occ]["total_hours"] += e.get("hours_estimate", 0)
 
     # Create summary
     summary = {
@@ -261,27 +265,34 @@ def generate_summary_report(output_file: Path):
         "occupation_breakdown": [
             {
                 "occupation": occ,
-                "task_count": stats['count'],
-                "total_hours": round(stats['total_hours'], 2),
-                "avg_hours": round(stats['total_hours'] / stats['count'], 2)
+                "task_count": stats["count"],
+                "total_hours": round(stats["total_hours"], 2),
+                "avg_hours": round(stats["total_hours"] / stats["count"], 2),
             }
-            for occ, stats in sorted(occupation_stats.items(), key=lambda x: x[1]['total_hours'], reverse=True)
-        ]
+            for occ, stats in sorted(
+                occupation_stats.items(),
+                key=lambda x: x[1]["total_hours"],
+                reverse=True,
+            )
+        ],
     }
 
     # Save summary
     summary_path = output_file.parent / "summary.json"
-    with open(summary_path, 'w') as f:
+    with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
     log_message(f"📊 Summary Report:")
     log_message(f"   Total tasks: {len(estimates)}")
     log_message(f"   Total estimated hours: {summary['total_estimated_hours']:,.1f}")
     log_message(f"   Average hours per task: {summary['average_hours_per_task']:.2f}")
-    log_message(f"   Range: {summary['min_hours']:.1f} - {summary['max_hours']:.1f} hours")
+    log_message(
+        f"   Range: {summary['min_hours']:.1f} - {summary['max_hours']:.1f} hours"
+    )
     log_message(f"   Total tokens: {total_tokens:,}")
     log_message(f"   Estimated cost: ${summary['estimated_cost_usd']:.2f}")
     log_message(f"   Summary saved to: {summary_path}")
+
 
 def main():
     """Main execution function"""
@@ -305,7 +316,9 @@ def main():
     # Load existing estimates to resume if interrupted
     processed_ids = load_existing_estimates(output_file)
     if processed_ids:
-        log_message(f"Found {len(processed_ids)} already processed tasks - will skip these")
+        log_message(
+            f"Found {len(processed_ids)} already processed tasks - will skip these"
+        )
 
     # Process each task
     total_tasks = len(df)
@@ -314,7 +327,7 @@ def main():
     failed_count = 0
 
     for idx, row in df.iterrows():
-        task_id = row.get('task_id', f"task_{idx}")
+        task_id = row.get("task_id", f"task_{idx}")
 
         log_message(f"\n{'=' * 80}")
         log_message(f"Processing task {idx + 1}/{total_tasks}: {task_id}")
@@ -327,15 +340,15 @@ def main():
 
         try:
             # Extract task information
-            occupation = row.get('occupation', 'Unknown')
-            sector = row.get('sector', 'Unknown')
-            task_prompt = str(row.get('prompt', ''))
+            occupation = row.get("occupation", "Unknown")
+            sector = row.get("sector", "Unknown")
+            task_prompt = str(row.get("prompt", ""))
 
             # Handle reference_files
-            ref_files = row.get('reference_files', [])
+            ref_files = row.get("reference_files", [])
             if isinstance(ref_files, (list, tuple)):
                 ref_files = list(ref_files)
-            elif hasattr(ref_files, '__iter__') and not isinstance(ref_files, str):
+            elif hasattr(ref_files, "__iter__") and not isinstance(ref_files, str):
                 ref_files = list(ref_files)
             else:
                 ref_files = []
@@ -346,7 +359,7 @@ def main():
                 occupation=occupation,
                 sector=sector,
                 task_prompt=task_prompt,
-                reference_files=ref_files
+                reference_files=ref_files,
             )
 
             # Save to file immediately (streaming approach)
@@ -380,6 +393,7 @@ def main():
     log_message(f"Total estimates in output: {skipped_count + processed_count}")
     log_message(f"Output file: {output_file.absolute()}")
     log_message(f"{'=' * 80}")
+
 
 if __name__ == "__main__":
     main()

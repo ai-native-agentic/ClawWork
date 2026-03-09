@@ -19,7 +19,7 @@ CURRENT_STATE = {
     "evaluator": None,
     "current_date": None,
     "current_task": None,
-    "data_path": "./livebench/data/agent_data"
+    "data_path": "./livebench/data/agent_data",
 }
 
 
@@ -30,7 +30,7 @@ def set_global_state(
     evaluator,
     current_date: str,
     current_task: Optional[Dict] = None,
-    data_path: str = "./livebench/data/agent_data"
+    data_path: str = "./livebench/data/agent_data",
 ):
     """Set global state for MCP tools"""
     CURRENT_STATE["signature"] = signature
@@ -71,7 +71,7 @@ def get_economic_status() -> dict:
         "daily_cost": summary["daily_cost"],
         "survival_status": summary["survival_status"],
         "is_bankrupt": summary["is_bankrupt"],
-        "message": f"Balance: ${summary['balance']:.2f} | Status: {summary['survival_status']}"
+        "message": f"Balance: ${summary['balance']:.2f} | Status: {summary['survival_status']}",
     }
 
 
@@ -92,7 +92,7 @@ def decide_activity(activity: str, reasoning: str) -> dict:
     if activity not in ["work", "learn"]:
         return {
             "error": "Invalid activity. Must be 'work' or 'learn'",
-            "valid_options": ["work", "learn"]
+            "valid_options": ["work", "learn"],
         }
 
     # Log decision
@@ -101,19 +101,13 @@ def decide_activity(activity: str, reasoning: str) -> dict:
 
     if signature and current_date:
         decision_log_dir = os.path.join(
-            CURRENT_STATE["data_path"],
-            signature,
-            "decisions"
+            CURRENT_STATE["data_path"], signature, "decisions"
         )
         os.makedirs(decision_log_dir, exist_ok=True)
 
         decision_log_file = os.path.join(decision_log_dir, "decisions.jsonl")
 
-        log_entry = {
-            "date": current_date,
-            "activity": activity,
-            "reasoning": reasoning
-        }
+        log_entry = {"date": current_date, "activity": activity, "reasoning": reasoning}
 
         with open(decision_log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry) + "\n")
@@ -122,7 +116,7 @@ def decide_activity(activity: str, reasoning: str) -> dict:
         "confirmed": True,
         "activity": activity,
         "reasoning": reasoning,
-        "message": f"Decision confirmed: {activity.upper()} | Reason: {reasoning}"
+        "message": f"Decision confirmed: {activity.upper()} | Reason: {reasoning}",
     }
 
 
@@ -155,7 +149,7 @@ def get_task_details() -> dict:
         "prompt": current_task["prompt"],
         "reference_files": reference_files,
         "reference_count": len(reference_files),
-        "message": f"Task loaded: {current_task['occupation']} in {current_task['sector']}"
+        "message": f"Task loaded: {current_task['occupation']} in {current_task['sector']}",
     }
 
 
@@ -190,7 +184,7 @@ def submit_work_artifact(artifact_path: str, description: str = "") -> dict:
         signature=signature,
         task=current_task,
         artifact_path=artifact_path,
-        description=description
+        description=description,
     )
 
     # Add payment to balance with evaluation score threshold
@@ -198,7 +192,7 @@ def submit_work_artifact(artifact_path: str, description: str = "") -> dict:
         amount=payment,
         task_id=current_task["task_id"],
         evaluation_score=evaluation_score,
-        description=f"Completed: {current_task['occupation']}"
+        description=f"Completed: {current_task['occupation']}",
     )
 
     return {
@@ -209,7 +203,7 @@ def submit_work_artifact(artifact_path: str, description: str = "") -> dict:
         "feedback": feedback,
         "task_id": current_task["task_id"],
         "new_balance": economic_tracker.get_balance(),
-        "message": f"Evaluation complete. Score: {evaluation_score:.2f}, Payment: ${actual_payment:.2f}"
+        "message": f"Evaluation complete. Score: {evaluation_score:.2f}, Payment: ${actual_payment:.2f}",
     }
 
 
@@ -239,13 +233,13 @@ def create_file(file_path: str, content: str) -> dict:
             "success": True,
             "file_path": file_path,
             "file_size": file_size,
-            "message": f"File created: {file_path} ({file_size} bytes)"
+            "message": f"File created: {file_path} ({file_size} bytes)",
         }
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "message": f"Failed to create file: {str(e)}"
+            "message": f"Failed to create file: {str(e)}",
         }
 
 
@@ -271,7 +265,7 @@ def get_work_history() -> dict:
         "total_tasks_completed": len(history),
         "total_earnings": total_earnings,
         "recent_evaluations": history[-5:] if len(history) > 5 else history,
-        "message": f"Completed {len(history)} tasks, earned ${total_earnings:.2f}"
+        "message": f"Completed {len(history)} tasks, earned ${total_earnings:.2f}",
     }
 
 
@@ -295,7 +289,7 @@ def get_memory() -> dict:
         return {
             "success": True,
             "content": "",
-            "message": "Memory file doesn't exist yet. No memories stored."
+            "message": "Memory file doesn't exist yet. No memories stored.",
         }
 
     try:
@@ -306,13 +300,13 @@ def get_memory() -> dict:
             "success": True,
             "content": content,
             "file_path": memory_file,
-            "message": f"Memory retrieved ({len(content)} characters)"
+            "message": f"Memory retrieved ({len(content)} characters)",
         }
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "message": f"Failed to read memory: {str(e)}"
+            "message": f"Failed to read memory: {str(e)}",
         }
 
 
@@ -345,7 +339,9 @@ def save_to_memory(content: str, topic: str = "") -> dict:
         # Create memory entry with timestamp
         timestamp = datetime.now().isoformat()
         memory_entry = f"\n\n---\n\n## {topic if topic else 'Memory Entry'}\n"
-        memory_entry += f"**Date**: {current_date or 'Unknown'} | **Timestamp**: {timestamp}\n\n"
+        memory_entry += (
+            f"**Date**: {current_date or 'Unknown'} | **Timestamp**: {timestamp}\n\n"
+        )
         memory_entry += content + "\n"
 
         # Append to memory file
@@ -357,18 +353,23 @@ def save_to_memory(content: str, topic: str = "") -> dict:
             "file_path": memory_file,
             "topic": topic,
             "content_length": len(content),
-            "message": f"Memory saved: {topic if topic else 'Untitled'} ({len(content)} characters)"
+            "message": f"Memory saved: {topic if topic else 'Untitled'} ({len(content)} characters)",
         }
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "message": f"Failed to save memory: {str(e)}"
+            "message": f"Failed to save memory: {str(e)}",
         }
 
 
 @mcp.tool()
-def learn_from_web(query: str, max_results: int = 3, save_to_memory_flag: bool = True, memory_topic: str = "") -> dict:
+def learn_from_web(
+    query: str,
+    max_results: int = 3,
+    save_to_memory_flag: bool = True,
+    memory_topic: str = "",
+) -> dict:
     """
     Use web search to learn about any topic. Searches the web for information
     and optionally saves the learned information to the agent's memory.
@@ -394,7 +395,9 @@ def learn_from_web(query: str, max_results: int = 3, save_to_memory_flag: bool =
     try:
         from livebench.tools.productivity.search import search_web as _search_web_impl
     except ImportError:
-        return {"error": "search_web implementation not found in livebench.tools.productivity.search"}
+        return {
+            "error": "search_web implementation not found in livebench.tools.productivity.search"
+        }
 
     # Perform web search using the unified search implementation
     search_result = _search_web_impl(query=query, max_results=max_results)
@@ -404,7 +407,7 @@ def learn_from_web(query: str, max_results: int = 3, save_to_memory_flag: bool =
             "success": False,
             "error": search_result.get("error", "Search failed"),
             "query": query,
-            "message": f"Failed to learn about '{query}': {search_result.get('error', 'Unknown error')}"
+            "message": f"Failed to learn about '{query}': {search_result.get('error', 'Unknown error')}",
         }
 
     # Save to memory if requested
@@ -421,7 +424,9 @@ def learn_from_web(query: str, max_results: int = 3, save_to_memory_flag: bool =
                 memory_content += f"**AI Summary**: {answer}\n\n"
 
             memory_content += f"**Sources**:\n\n"
-            for idx, result in enumerate(search_result.get("results", [])[:max_results], 1):
+            for idx, result in enumerate(
+                search_result.get("results", [])[:max_results], 1
+            ):
                 title = result.get("title", "Untitled")
                 url = result.get("url", "")
                 content = result.get("content", "")[:500]  # First 500 chars
@@ -434,7 +439,9 @@ def learn_from_web(query: str, max_results: int = 3, save_to_memory_flag: bool =
         elif provider == "jina":
             # Jina provides title, URL, snippet
             memory_content += f"**Sources**:\n\n"
-            for idx, result in enumerate(search_result.get("results", [])[:max_results], 1):
+            for idx, result in enumerate(
+                search_result.get("results", [])[:max_results], 1
+            ):
                 title = result.get("title", "Untitled")
                 url = result.get("url", "")
                 snippet = result.get("snippet", "")
@@ -443,8 +450,7 @@ def learn_from_web(query: str, max_results: int = 3, save_to_memory_flag: bool =
                 memory_content += f"   {snippet}\n\n"
 
         memory_result = save_to_memory(
-            content=memory_content,
-            topic=memory_topic or f"Web Learning: {query}"
+            content=memory_content, topic=memory_topic or f"Web Learning: {query}"
         )
         memory_saved = memory_result.get("success", False)
 
@@ -456,12 +462,13 @@ def learn_from_web(query: str, max_results: int = 3, save_to_memory_flag: bool =
         "results_count": search_result.get("results_count", 0),
         "results": search_result.get("results", []),
         "memory_saved": memory_saved,
-        "message": f"Learned about '{query}' using {search_result.get('provider', 'unknown')} ({search_result.get('results_count', 0)} results)"
+        "message": f"Learned about '{query}' using {search_result.get('provider', 'unknown')} ({search_result.get('results_count', 0)} results)",
     }
 
 
 if __name__ == "__main__":
     import os
+
     # Run MCP server with HTTP transport
     port = int(os.getenv("LIVEBENCH_HTTP_PORT", "8010"))
     mcp.run(transport="streamable-http", port=port)

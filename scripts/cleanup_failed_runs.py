@@ -28,7 +28,9 @@ import re
 import shutil
 import sys
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "livebench", "data", "agent_data")
+DATA_DIR = os.path.join(
+    os.path.dirname(__file__), "..", "livebench", "data", "agent_data"
+)
 
 # Patterns in terminal logs that indicate a billing/account failure.
 # Only these runs are cleaned up — the agent never actually started working.
@@ -68,13 +70,12 @@ def get_agents(base_dir: str) -> list[str]:
     """List all agent directories."""
     if not os.path.isdir(base_dir):
         return []
-    return [
-        d for d in os.listdir(base_dir)
-        if os.path.isdir(os.path.join(base_dir, d))
-    ]
+    return [d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d))]
 
 
-def cleanup_agent(agent_dir: str, agent_name: str, delete: bool, target_date: str | None = None):
+def cleanup_agent(
+    agent_dir: str, agent_name: str, delete: bool, target_date: str | None = None
+):
     """Scan and clean up failed runs for a single agent."""
     terminal_logs_dir = os.path.join(agent_dir, "terminal_logs")
     activity_logs_dir = os.path.join(agent_dir, "activity_logs")
@@ -145,7 +146,9 @@ def cleanup_agent(agent_dir: str, agent_name: str, delete: bool, target_date: st
 
 def main():
     parser = argparse.ArgumentParser(description="Clean up failed agent run data")
-    parser.add_argument("--delete", action="store_true", help="Actually delete files (default: dry run)")
+    parser.add_argument(
+        "--delete", action="store_true", help="Actually delete files (default: dry run)"
+    )
     parser.add_argument("--agent", type=str, help="Target a specific agent name")
     parser.add_argument("--date", type=str, help="Target a specific date (YYYY-MM-DD)")
     args = parser.parse_args()

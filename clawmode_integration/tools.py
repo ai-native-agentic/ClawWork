@@ -15,24 +15,24 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from nanobot.agent.tools.base import Tool
 
-
 # ---------------------------------------------------------------------------
 # Shared state object (replaces _global_state dict)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ClawWorkState:
     """Mutable state shared across all ClawWork tools within a session."""
 
     economic_tracker: Any  # clawwork.agent.economic_tracker.EconomicTracker
-    task_manager: Any      # clawwork.work.task_manager.TaskManager
-    evaluator: Any         # clawwork.work.evaluator.WorkEvaluator
+    task_manager: Any  # clawwork.work.task_manager.TaskManager
+    evaluator: Any  # clawwork.work.evaluator.WorkEvaluator
     signature: str = ""
     current_date: str | None = None
     current_task: dict | None = None
@@ -44,6 +44,7 @@ class ClawWorkState:
 # ---------------------------------------------------------------------------
 # DecideActivityTool
 # ---------------------------------------------------------------------------
+
 
 class DecideActivityTool(Tool):
     """Choose daily activity: work or learn."""
@@ -86,28 +87,35 @@ class DecideActivityTool(Tool):
         reasoning: str = kwargs.get("reasoning", "")
 
         if activity not in ("work", "learn"):
-            return json.dumps({
-                "error": "Invalid activity. Must be 'work' or 'learn'",
-                "valid_options": ["work", "learn"],
-            })
+            return json.dumps(
+                {
+                    "error": "Invalid activity. Must be 'work' or 'learn'",
+                    "valid_options": ["work", "learn"],
+                }
+            )
 
         if len(reasoning) < 50:
-            return json.dumps({
-                "error": "Reasoning must be at least 50 characters",
-                "current_length": len(reasoning),
-            })
+            return json.dumps(
+                {
+                    "error": "Reasoning must be at least 50 characters",
+                    "current_length": len(reasoning),
+                }
+            )
 
-        return json.dumps({
-            "success": True,
-            "activity": activity,
-            "reasoning": reasoning,
-            "message": f"Decision made: {activity.upper()}",
-        })
+        return json.dumps(
+            {
+                "success": True,
+                "activity": activity,
+                "reasoning": reasoning,
+                "message": f"Decision made: {activity.upper()}",
+            }
+        )
 
 
 # ---------------------------------------------------------------------------
 # SubmitWorkTool
 # ---------------------------------------------------------------------------
+
 
 class SubmitWorkTool(Tool):
     """Submit completed work for evaluation and payment."""
@@ -164,24 +172,30 @@ class SubmitWorkTool(Tool):
                 if isinstance(parsed, list):
                     artifact_file_paths = parsed
                 else:
-                    return json.dumps({
-                        "error": f"artifact_file_paths must be a list, got {type(parsed).__name__}",
-                    })
+                    return json.dumps(
+                        {
+                            "error": f"artifact_file_paths must be a list, got {type(parsed).__name__}",
+                        }
+                    )
             except json.JSONDecodeError as exc:
                 return json.dumps({"error": f"Invalid JSON for artifact_file_paths: {exc}"})
 
         # Must have at least one of text or files
         if not work_output and not artifact_file_paths:
-            return json.dumps({
-                "error": "Must provide either work_output or artifact_file_paths, or both",
-            })
+            return json.dumps(
+                {
+                    "error": "Must provide either work_output or artifact_file_paths, or both",
+                }
+            )
 
         # Length check when text-only
         if work_output and not artifact_file_paths and len(work_output) < 100:
-            return json.dumps({
-                "error": "Work output too short (min 100 chars when no files provided).",
-                "current_length": len(work_output),
-            })
+            return json.dumps(
+                {
+                    "error": "Work output too short (min 100 chars when no files provided).",
+                    "current_length": len(work_output),
+                }
+            )
 
         # State references
         evaluator = self._state.evaluator
@@ -210,10 +224,12 @@ class SubmitWorkTool(Tool):
         if artifact_file_paths:
             missing = [p for p in artifact_file_paths if not os.path.exists(p)]
             if missing:
-                return json.dumps({
-                    "error": f"Some artifact files not found: {missing}",
-                    "missing_files": missing,
-                })
+                return json.dumps(
+                    {
+                        "error": f"Some artifact files not found: {missing}",
+                        "missing_files": missing,
+                    }
+                )
             all_artifact_paths.extend(artifact_file_paths)
 
         # ---- Evaluate ----
@@ -248,6 +264,7 @@ class SubmitWorkTool(Tool):
 # ---------------------------------------------------------------------------
 # LearnTool
 # ---------------------------------------------------------------------------
+
 
 class LearnTool(Tool):
     """Learn something new and add it to the knowledge base."""
@@ -289,10 +306,12 @@ class LearnTool(Tool):
         knowledge: str = kwargs.get("knowledge", "")
 
         if len(knowledge) < 200:
-            return json.dumps({
-                "error": "Knowledge content too short. Minimum 200 characters required.",
-                "current_length": len(knowledge),
-            })
+            return json.dumps(
+                {
+                    "error": "Knowledge content too short. Minimum 200 characters required.",
+                    "current_length": len(knowledge),
+                }
+            )
 
         data_path = self._state.data_path
         date = self._state.current_date
@@ -311,17 +330,20 @@ class LearnTool(Tool):
         with open(memory_file, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-        return json.dumps({
-            "success": True,
-            "topic": topic,
-            "knowledge_length": len(knowledge),
-            "message": f"Learned about: {topic}",
-        })
+        return json.dumps(
+            {
+                "success": True,
+                "topic": topic,
+                "knowledge_length": len(knowledge),
+                "message": f"Learned about: {topic}",
+            }
+        )
 
 
 # ---------------------------------------------------------------------------
 # GetStatusTool
 # ---------------------------------------------------------------------------
+
 
 class GetStatusTool(Tool):
     """Return the agent's current economic status."""
@@ -350,9 +372,11 @@ class GetStatusTool(Tool):
         if not tracker:
             return json.dumps({"error": "Economic tracker not available"})
 
-        return json.dumps({
-            "balance": tracker.get_balance(),
-            "net_worth": tracker.get_net_worth(),
-            "daily_cost": tracker.get_daily_cost(),
-            "status": tracker.get_survival_status(),
-        })
+        return json.dumps(
+            {
+                "balance": tracker.get_balance(),
+                "net_worth": tracker.get_net_worth(),
+                "daily_cost": tracker.get_daily_cost(),
+                "status": tracker.get_survival_status(),
+            }
+        )

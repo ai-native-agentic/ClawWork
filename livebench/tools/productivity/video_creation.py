@@ -10,11 +10,18 @@ from typing import Dict, Any
 def _get_global_state():
     """Get global state from parent module"""
     from livebench.tools.direct_tools import _global_state
+
     return _global_state
 
 
 @tool
-def create_video(slides_json: str, output_filename: str, width: int = 1280, height: int = 720, fps: int = 24) -> Dict[str, Any]:
+def create_video(
+    slides_json: str,
+    output_filename: str,
+    width: int = 1280,
+    height: int = 720,
+    fps: int = 24,
+) -> Dict[str, Any]:
     """
     Create a video from text slides and/or images.
 
@@ -75,8 +82,8 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
 
     # Sanitize filename
     safe_filename = os.path.basename(output_filename)
-    safe_filename = safe_filename.replace('/', '_').replace('\\', '_')
-    if safe_filename.endswith('.mp4'):
+    safe_filename = safe_filename.replace("/", "_").replace("\\", "_")
+    if safe_filename.endswith(".mp4"):
         safe_filename = safe_filename[:-4]
 
     video_path = os.path.join(sandbox_dir, f"{safe_filename}.mp4")
@@ -85,13 +92,16 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
         # Import moviepy
         try:
             from moviepy.editor import (
-                VideoClip, ImageClip, TextClip, concatenate_videoclips
+                VideoClip,
+                ImageClip,
+                TextClip,
+                concatenate_videoclips,
             )
             import numpy as np
         except ImportError:
             return {
                 "error": "moviepy not installed. Run: pip install moviepy",
-                "hint": "Also install: pip install imageio imageio-ffmpeg"
+                "hint": "Also install: pip install imageio imageio-ffmpeg",
             }
 
         # Process each slide
@@ -102,7 +112,9 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
             duration = float(slide.get("duration", 3.0))
 
             if duration <= 0 or duration > 60:
-                return {"error": f"Slide {i}: duration must be between 0 and 60 seconds"}
+                return {
+                    "error": f"Slide {i}: duration must be between 0 and 60 seconds"
+                }
 
             try:
                 if slide_type == "text":
@@ -118,7 +130,9 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
                     # Create background
                     def make_frame(t):
                         # Convert hex color to RGB
-                        bg_rgb = tuple(int(bg_color.lstrip('#')[j:j+2], 16) for j in (0, 2, 4))
+                        bg_rgb = tuple(
+                            int(bg_color.lstrip("#")[j : j + 2], 16) for j in (0, 2, 4)
+                        )
                         frame = np.full((height, width, 3), bg_rgb, dtype=np.uint8)
                         return frame
 
@@ -126,14 +140,18 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
 
                     # Create text overlay
                     try:
-                        txt_clip = TextClip(
-                            content,
-                            fontsize=font_size,
-                            color=text_color,
-                            size=(width * 0.8, None),
-                            method='caption',
-                            align='center'
-                        ).set_duration(duration).set_position('center')
+                        txt_clip = (
+                            TextClip(
+                                content,
+                                fontsize=font_size,
+                                color=text_color,
+                                size=(width * 0.8, None),
+                                method="caption",
+                                align="center",
+                            )
+                            .set_duration(duration)
+                            .set_position("center")
+                        )
 
                         # Composite
                         clip = bg_clip.set_duration(duration)
@@ -142,6 +160,7 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
 
                         # Overlay text
                         from moviepy.editor import CompositeVideoClip
+
                         clip = CompositeVideoClip([clip, txt_clip])
 
                     except Exception as e:
@@ -166,10 +185,14 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
                     sandbox_parent = os.path.abspath(os.path.join(sandbox_dir, ".."))
 
                     if not abs_image_path.startswith(sandbox_parent):
-                        return {"error": f"Slide {i}: image path must be within sandbox directory"}
+                        return {
+                            "error": f"Slide {i}: image path must be within sandbox directory"
+                        }
 
                     if not os.path.exists(abs_image_path):
-                        return {"error": f"Slide {i}: image file not found: {image_path}"}
+                        return {
+                            "error": f"Slide {i}: image file not found: {image_path}"
+                        }
 
                     # Create image clip
                     clip = ImageClip(abs_image_path).set_duration(duration)
@@ -179,7 +202,9 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
                     clips.append(clip)
 
                 else:
-                    return {"error": f"Slide {i}: invalid type '{slide_type}'. Must be 'text' or 'image'"}
+                    return {
+                        "error": f"Slide {i}: invalid type '{slide_type}'. Must be 'text' or 'image'"
+                    }
 
             except Exception as e:
                 return {"error": f"Slide {i}: failed to create clip: {str(e)}"}
@@ -194,10 +219,10 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
         final_clip.write_videofile(
             video_path,
             fps=fps,
-            codec='libx264',
+            codec="libx264",
             audio=False,
-            preset='medium',
-            logger=None  # Suppress verbose output
+            preset="medium",
+            logger=None,  # Suppress verbose output
         )
 
         # Clean up
@@ -217,11 +242,8 @@ def create_video(slides_json: str, output_filename: str, width: int = 1280, heig
             "num_slides": len(slides),
             "resolution": f"{width}x{height}",
             "fps": fps,
-            "message": f"✅ Created video: {safe_filename}.mp4 ({file_size} bytes, {len(slides)} slides)"
+            "message": f"✅ Created video: {safe_filename}.mp4 ({file_size} bytes, {len(slides)} slides)",
         }
 
     except Exception as e:
-        return {
-            "error": f"Failed to create video: {str(e)}",
-            "filename": safe_filename
-        }
+        return {"error": f"Failed to create video: {str(e)}", "filename": safe_filename}

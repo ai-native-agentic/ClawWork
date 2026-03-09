@@ -16,13 +16,13 @@ import argparse
 
 def test_template(template_id=None):
     """Test that all packages are available in the E2B template"""
-    
+
     # Check for E2B API key
-    api_key = os.getenv('E2B_API_KEY')
+    api_key = os.getenv("E2B_API_KEY")
     if not api_key:
         print("❌ Error: E2B_API_KEY environment variable is not set")
         sys.exit(1)
-    
+
     # Import E2B
     try:
         from e2b_code_interpreter import Sandbox
@@ -31,17 +31,17 @@ def test_template(template_id=None):
         print("\nInstall it with:")
         print("  pip install e2b-code-interpreter")
         sys.exit(1)
-    
+
     # Get template ID
     if not template_id:
-        template_id = os.getenv('E2B_TEMPLATE_ID')
-    
+        template_id = os.getenv("E2B_TEMPLATE_ID")
+
     print("=" * 70)
     print("🧪 E2B Template Package Test")
     print("=" * 70)
     print(f"\n🔑 API Key: {api_key[:10]}...{api_key[-4:]}")
     print(f"🏷️  Template ID: {template_id or 'default (code-interpreter-v1)'}")
-    
+
     # Test packages
     test_code = """
 import sys
@@ -96,11 +96,11 @@ if results['failed']:
 else:
     print("\\n🎉 All packages are available!")
 """
-    
+
     print("\n" + "=" * 70)
     print("🚀 Creating sandbox and running tests...")
     print("=" * 70)
-    
+
     sandbox = None
     try:
         # Create sandbox
@@ -110,13 +110,13 @@ else:
         else:
             print("\n📦 Creating sandbox with default template")
             sandbox = Sandbox.create()
-        
+
         print(f"✅ Sandbox created: {sandbox.id}")
-        
+
         # Run test code
         print("\n🔍 Testing package imports...")
         execution = sandbox.run_code(test_code)
-        
+
         # Print results
         if execution.error:
             print(f"\n❌ Test execution failed:")
@@ -125,10 +125,11 @@ else:
         else:
             print(execution.logs)
             return True
-            
+
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -145,14 +146,14 @@ def main():
         description="Test E2B custom template package availability"
     )
     parser.add_argument(
-        '--template-id',
-        help='E2B template ID to test (defaults to E2B_TEMPLATE_ID env var)'
+        "--template-id",
+        help="E2B template ID to test (defaults to E2B_TEMPLATE_ID env var)",
     )
-    
+
     args = parser.parse_args()
-    
+
     success = test_template(args.template_id)
-    
+
     if success:
         print("\n" + "=" * 70)
         print("✅ Template test PASSED")
@@ -169,5 +170,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
